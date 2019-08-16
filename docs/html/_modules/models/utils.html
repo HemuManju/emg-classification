@@ -1,0 +1,328 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>models.utils &mdash; Human effort classification in pHRI 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> Human effort classification in pHRI
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/data.html">data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/datasets.html">datasets package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/features.html">features package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/models.html">models package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/visualization.html">visualization package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/main.html">main module</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Human effort classification in pHRI</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>models.utils</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for models.utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">from</span> <span class="nn">torchnet.logger</span> <span class="k">import</span> <span class="n">VisdomPlotLogger</span>
+<span class="kn">from</span> <span class="nn">torch.nn.init</span> <span class="k">import</span> <span class="n">xavier_normal_</span>
+
+
+<div class="viewcode-block" id="weights_init"><a class="viewcode-back" href="../../source/models.html#models.utils.weights_init">[docs]</a><span class="k">def</span> <span class="nf">weights_init</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Xavier normal weight initialization for the given model.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    model : pytorch model for random weight initialization</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pytorch model with xavier normal initialized weights</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">):</span>
+        <span class="n">xavier_normal_</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="calculate_accuracy"><a class="viewcode-back" href="../../source/models.html#models.utils.calculate_accuracy">[docs]</a><span class="k">def</span> <span class="nf">calculate_accuracy</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data_iterator</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the classification accuracy.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    model : pytorch object</span>
+<span class="sd">        A pytorch model.</span>
+<span class="sd">    data_iterator : pytorch object</span>
+<span class="sd">        A pytorch dataset.</span>
+<span class="sd">    key : str</span>
+<span class="sd">        A key to select which dataset to evaluate</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        accuracy of classification for the given key.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cuda:0&#39;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">length</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">data_iterator</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+            <span class="n">out_put</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
+            <span class="n">out_put</span> <span class="o">=</span> <span class="n">out_put</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+            <span class="n">total</span> <span class="o">+=</span> <span class="p">(</span><span class="n">out_put</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="n">y</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+            <span class="n">length</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">accuracy</span> <span class="o">=</span> <span class="n">total</span> <span class="o">/</span> <span class="n">length</span>
+
+    <span class="k">return</span> <span class="n">accuracy</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="classification_accuracy"><a class="viewcode-back" href="../../source/models.html#models.utils.classification_accuracy">[docs]</a><span class="k">def</span> <span class="nf">classification_accuracy</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data_iterator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the classification accuracy of all data_iterators.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    model : pytorch object</span>
+<span class="sd">        A pytorch model.</span>
+<span class="sd">    data_iterator : dict</span>
+<span class="sd">        A dictionary with different datasets.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list</span>
+<span class="sd">        A dictionary of accuracy for all datasets.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">accuracy</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">data_iterator</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+        <span class="n">accuracy</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">calculate_accuracy</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data_iterator</span><span class="p">,</span> <span class="n">key</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">accuracy</span></div>
+
+
+<div class="viewcode-block" id="visual_log"><a class="viewcode-back" href="../../source/models.html#models.utils.visual_log">[docs]</a><span class="k">def</span> <span class="nf">visual_log</span><span class="p">(</span><span class="n">title</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a pytorch tnt visual loggger.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    title : str</span>
+<span class="sd">        A title to describe the logging.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    type</span>
+<span class="sd">        pytorch visual logger.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">visual_logger</span> <span class="o">=</span> <span class="n">VisdomPlotLogger</span><span class="p">(</span>
+        <span class="s1">&#39;line&#39;</span><span class="p">,</span>
+        <span class="n">opts</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">legend</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Training&#39;</span><span class="p">,</span> <span class="s1">&#39;Validation&#39;</span><span class="p">,</span> <span class="s1">&#39;Testing&#39;</span><span class="p">],</span>
+                  <span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;Epochs&#39;</span><span class="p">,</span>
+                  <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Accuracy&#39;</span><span class="p">,</span>
+                  <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">visual_logger</span></div>
+
+
+<div class="viewcode-block" id="create_model_info"><a class="viewcode-back" href="../../source/models.html#models.utils.create_model_info">[docs]</a><span class="k">def</span> <span class="nf">create_model_info</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">loss_func</span><span class="p">,</span> <span class="n">accuracy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a dictionary of relevant model info.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    param : dict</span>
+<span class="sd">        Any parameter relevant for logging.</span>
+<span class="sd">    accuracy_log : dict</span>
+<span class="sd">        A dictionary containing accuracies.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    type</span>
+<span class="sd">        Description of returned object.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">model_info</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;training_accuracy&#39;</span><span class="p">:</span> <span class="n">accuracy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+        <span class="s1">&#39;validation_accuracy&#39;</span><span class="p">:</span> <span class="n">accuracy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+        <span class="s1">&#39;testing_accuracy&#39;</span><span class="p">:</span> <span class="n">accuracy</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span>
+        <span class="s1">&#39;model_parameters&#39;</span><span class="p">:</span> <span class="n">config</span><span class="p">,</span>
+        <span class="s1">&#39;loss function&#39;</span><span class="p">:</span> <span class="n">loss_func</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">model_info</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 
+      <span class="lastupdated">
+        Last updated on Aug 16, 2019.
+      </span>
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

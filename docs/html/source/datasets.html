@@ -1,0 +1,444 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>datasets package &mdash; Human effort classification in pHRI 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="features package" href="features.html" />
+    <link rel="prev" title="data package" href="data.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Human effort classification in pHRI
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">data package</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">datasets package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-datasets.riemann_datasets">datasets.riemann_datasets module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-datasets.statistics_dataset">datasets.statistics_dataset module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-datasets.torch_datasets">datasets.torch_datasets module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-datasets">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">features package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">models package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualization.html">visualization package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main.html">main module</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Human effort classification in pHRI</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>datasets package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/source/datasets.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="datasets-package">
+<h1>datasets package<a class="headerlink" href="#datasets-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-datasets.riemann_datasets">
+<span id="datasets-riemann-datasets-module"></span><h2>datasets.riemann_datasets module<a class="headerlink" href="#module-datasets.riemann_datasets" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="datasets.riemann_datasets.subject_dependent_data">
+<code class="sig-name descname">subject_dependent_data</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/datasets/riemann_datasets.html#subject_dependent_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datasets.riemann_datasets.subject_dependent_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get subject dependent data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>yaml</em>) – The configuration file</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>2 arrays features and labels</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>features, labels</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="datasets.riemann_datasets.subject_pooled_data">
+<code class="sig-name descname">subject_pooled_data</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/datasets/riemann_datasets.html#subject_pooled_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datasets.riemann_datasets.subject_pooled_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get subject independent data (pooled data).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>yaml</em>) – The configuration file</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>2 arrays features and labels.
+A tag determines whether the data point is used in training.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>features, labels, tags</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="datasets.riemann_datasets.subject_specific_data">
+<code class="sig-name descname">subject_specific_data</code><span class="sig-paren">(</span><em class="sig-param">subject</em>, <em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/datasets/riemann_datasets.html#subject_specific_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datasets.riemann_datasets.subject_specific_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get subject specific data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>yaml</em>) – The configuration file</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>2 arrays features and labels</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>features, labels</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="datasets.riemann_datasets.train_test_data">
+<code class="sig-name descname">train_test_data</code><span class="sig-paren">(</span><em class="sig-param">features</em>, <em class="sig-param">labels</em>, <em class="sig-param">leave_tags</em>, <em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/datasets/riemann_datasets.html#train_test_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datasets.riemann_datasets.train_test_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Short summary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>features</strong> (<em>array</em>) – An array of features.</p></li>
+<li><p><strong>labels</strong> (<em>array</em>) – True labels.</p></li>
+<li><p><strong>leave_tags</strong> (<em>array</em>) – An array specifying whether a subject was left out of training.</p></li>
+<li><p><strong>config</strong> (<em>yaml</em>) – The configuration file.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dict containing the train and test data.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-datasets.statistics_dataset">
+<span id="datasets-statistics-dataset-module"></span><h2>datasets.statistics_dataset module<a class="headerlink" href="#module-datasets.statistics_dataset" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="datasets.statistics_dataset.matlab_dataframe">
+<code class="sig-name descname">matlab_dataframe</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/datasets/statistics_dataset.html#matlab_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datasets.statistics_dataset.matlab_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get subject independent data (pooled data) from external matlab file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>yaml</em>) – The configuration file</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>2 arrays features and labels.
+A tag determines whether the data point is used in training.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>features, labels, tags</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="datasets.statistics_dataset.subject_pooled_dataframe">
+<code class="sig-name descname">subject_pooled_dataframe</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/datasets/statistics_dataset.html#subject_pooled_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datasets.statistics_dataset.subject_pooled_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get subject independent data (pooled data).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>yaml</em>) – The configuration file</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>2 arrays features and labels.
+A tag determines whether the data point is used in training.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>features, labels, tags</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-datasets.torch_datasets">
+<span id="datasets-torch-datasets-module"></span><h2>datasets.torch_datasets module<a class="headerlink" href="#module-datasets.torch_datasets" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="datasets.torch_datasets.PooledDataset">
+<em class="property">class </em><code class="sig-name descname">PooledDataset</code><span class="sig-paren">(</span><em class="sig-param">features</em>, <em class="sig-param">labels</em>, <em class="sig-param">ids_list</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/datasets/torch_datasets.html#PooledDataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datasets.torch_datasets.PooledDataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.utils.data.dataset.Dataset</span></code></p>
+<p>All subject dataset class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ids_list</strong> (<em>list</em>) – ids list of training or validation or traning data.</p>
+</dd>
+</dl>
+<dl class="attribute">
+<dt id="datasets.torch_datasets.PooledDataset.ids_list">
+<code class="sig-name descname">ids_list</code><a class="headerlink" href="#datasets.torch_datasets.PooledDataset.ids_list" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datasets.torch_datasets.SubjectSpecificDataset">
+<em class="property">class </em><code class="sig-name descname">SubjectSpecificDataset</code><span class="sig-paren">(</span><em class="sig-param">x_data</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/datasets/torch_datasets.html#SubjectSpecificDataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datasets.torch_datasets.SubjectSpecificDataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.utils.data.dataset.Dataset</span></code></p>
+<p>A subject specific dataset class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>array</em>) – Input array of the features.</p>
+</dd>
+</dl>
+<dl class="attribute">
+<dt id="datasets.torch_datasets.SubjectSpecificDataset.length">
+<code class="sig-name descname">length</code><a class="headerlink" href="#datasets.torch_datasets.SubjectSpecificDataset.length" title="Permalink to this definition">¶</a></dt>
+<dd><p>Length of the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="datasets.torch_datasets.data_split_ids">
+<code class="sig-name descname">data_split_ids</code><span class="sig-paren">(</span><em class="sig-param">labels</em>, <em class="sig-param">test_size=0.15</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/datasets/torch_datasets.html#data_split_ids"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datasets.torch_datasets.data_split_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generators training, validation, and training
+indices to be used by Dataloader.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>labels</strong> (<em>array</em>) – An array of labels.</p></li>
+<li><p><strong>test_size</strong> (<em>float</em>) – Test size e.g. 0.15 is 15% of whole data.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dictionary of ids corresponding to train, validate, and test.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="datasets.torch_datasets.pooled_data_iterator">
+<code class="sig-name descname">pooled_data_iterator</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/datasets/torch_datasets.html#pooled_data_iterator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datasets.torch_datasets.pooled_data_iterator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create data iterators for torch models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>yaml</em>) – The configuration file.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dictionary contaning traning, validation, and testing iterator.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="datasets.torch_datasets.subject_pooled_data">
+<code class="sig-name descname">subject_pooled_data</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/datasets/torch_datasets.html#subject_pooled_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datasets.torch_datasets.subject_pooled_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get subject independent data (pooled data).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>yaml</em>) – The configuration file</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>2 arrays features and labels.
+A tag determines whether the data point is used in training.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>features, labels, tags</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-datasets">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-datasets" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="features.html" class="btn btn-neutral float-right" title="features package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="data.html" class="btn btn-neutral float-left" title="data package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 
+      <span class="lastupdated">
+        Last updated on Aug 16, 2019.
+      </span>
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

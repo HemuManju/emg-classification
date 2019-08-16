@@ -40,9 +40,7 @@ def plot_average_model_accuracy(experiment, config, variation=False):
             ax.fill_between(range(config['NUM_EPOCHS']),
                             average - min_val,
                             average + max_val,
-                            alpha=0.25,
-                            color=colors[i],
-                            edgecolor=colors[i])
+                            alpha=0.25)
         ax.plot(range(config['NUM_EPOCHS']),
                 average,
                 color=colors[i],
@@ -54,7 +52,7 @@ def plot_average_model_accuracy(experiment, config, variation=False):
     plt.ylabel('Accuracy')
     plt.legend()
     plt.tight_layout()
-    figure_asthetics(ax)
+    # figure_asthetics(ax) # Not needed at this point
     plt.show()
 
     return None

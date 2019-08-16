@@ -1,0 +1,575 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>data.create_data &mdash; Human effort classification in pHRI 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> Human effort classification in pHRI
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/data.html">data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/datasets.html">datasets package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/features.html">features package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/models.html">models package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/visualization.html">visualization package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/main.html">main module</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Human effort classification in pHRI</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>data.create_data</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for data.create_data</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
+
+<span class="kn">import</span> <span class="nn">mne</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">import</span> <span class="nn">deepdish</span> <span class="k">as</span> <span class="nn">dd</span>
+
+
+<div class="viewcode-block" id="get_trial_path"><a class="viewcode-back" href="../../source/data.html#data.create_data.get_trial_path">[docs]</a><span class="k">def</span> <span class="nf">get_trial_path</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">trial</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">robot</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get the trail path for a given subject and trial.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    subject : str</span>
+<span class="sd">        A string of subject ID e.g. 7707.</span>
+<span class="sd">    trial : str</span>
+<span class="sd">        A trail e.g. HighFine..</span>
+<span class="sd">    config : yaml</span>
+<span class="sd">        The configuration file.</span>
+<span class="sd">    robot : bool</span>
+<span class="sd">        To get robot path or emg path</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str</span>
+<span class="sd">        A str specifying the path to the data.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">robot</span><span class="p">:</span>
+        <span class="c1"># Trial time</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;force_data_path&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">subject</span>
+        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span>
+            <span class="n">file_name</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">file_name</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">trial</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="n">trial_path</span> <span class="o">=</span> <span class="n">file</span>
+
+    <span class="k">else</span><span class="p">:</span>
+
+        <span class="c1"># Trial time</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;raw_emg_path&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">subject</span>
+        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span>
+            <span class="n">file_name</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">file_name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;emg&#39;</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="n">trial_path</span> <span class="o">=</span> <span class="n">file</span>
+
+    <span class="k">return</span> <span class="n">trial_path</span></div>
+
+
+<div class="viewcode-block" id="get_trail_time"><a class="viewcode-back" href="../../source/data.html#data.create_data.get_trail_time">[docs]</a><span class="k">def</span> <span class="nf">get_trail_time</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">trial</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get the trail time for a given subject and trial.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    subject : str</span>
+<span class="sd">        A string of subject ID e.g. 7707.</span>
+<span class="sd">    trial : str</span>
+<span class="sd">        A trail e.g. HighFine..</span>
+<span class="sd">    config : yaml</span>
+<span class="sd">        The configuration file.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str</span>
+<span class="sd">        A str specifying the path to the data.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Trial time</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;force_data_path&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">subject</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span>
+        <span class="n">file_name</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">file_name</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">trial</span><span class="p">:</span>
+            <span class="k">break</span>
+    <span class="n">trial_path</span> <span class="o">=</span> <span class="n">file</span>
+
+    <span class="c1"># Get the trial time</span>
+    <span class="n">trial_time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">genfromtxt</span><span class="p">(</span><span class="n">trial_path</span><span class="p">,</span>
+                               <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                               <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span>
+                               <span class="n">usecols</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                               <span class="n">skip_footer</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span>
+                               <span class="n">skip_header</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+    <span class="c1"># Get EMG time</span>
+    <span class="n">trial_path</span> <span class="o">=</span> <span class="n">get_trial_path</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">trial</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+    <span class="n">time_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">genfromtxt</span><span class="p">(</span><span class="n">trial_path</span><span class="p">,</span>
+                              <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                              <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span>
+                              <span class="n">usecols</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                              <span class="n">skip_footer</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span>
+                              <span class="n">skip_header</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+    <span class="c1"># Get the sampling frequency</span>
+    <span class="n">emg_time</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1e6</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">time_data</span>
+    <span class="p">]</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">emg_time</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>  <span class="c1"># average sampling rate</span>
+    <span class="n">sfreq</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">dt</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+
+    <span class="c1"># Update year, month, and day of start time</span>
+    <span class="n">start_t</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">trial_time</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;%H:%M:%S:</span><span class="si">%f</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">start_t</span> <span class="o">=</span> <span class="n">start_t</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="n">emg_time</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">year</span><span class="p">,</span>
+                              <span class="n">month</span><span class="o">=</span><span class="n">emg_time</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">month</span><span class="p">,</span>
+                              <span class="n">day</span><span class="o">=</span><span class="n">emg_time</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">day</span><span class="p">)</span>
+
+    <span class="c1"># Update year, month, and day of end time</span>
+    <span class="n">end_t</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">trial_time</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;%H:%M:%S:</span><span class="si">%f</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">end_t</span> <span class="o">=</span> <span class="n">end_t</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="n">emg_time</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">year</span><span class="p">,</span>
+                          <span class="n">month</span><span class="o">=</span><span class="n">emg_time</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">month</span><span class="p">,</span>
+                          <span class="n">day</span><span class="o">=</span><span class="n">emg_time</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">day</span><span class="p">)</span>
+
+    <span class="n">trial_start</span> <span class="o">=</span> <span class="p">(</span><span class="n">start_t</span> <span class="o">-</span> <span class="n">emg_time</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>  <span class="c1"># convert to seconds</span>
+    <span class="n">trial_end</span> <span class="o">=</span> <span class="p">(</span><span class="n">end_t</span> <span class="o">-</span> <span class="n">emg_time</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">trial_start</span><span class="p">,</span> <span class="n">trial_end</span><span class="p">,</span> <span class="n">sfreq</span></div>
+
+
+<div class="viewcode-block" id="get_raw_emg"><a class="viewcode-back" href="../../source/data.html#data.create_data.get_raw_emg">[docs]</a><span class="k">def</span> <span class="nf">get_raw_emg</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">trial</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get the raw emg data for a subject and trail.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    subject : str</span>
+<span class="sd">        A string of subject ID e.g. 7707.</span>
+<span class="sd">    trial : str</span>
+<span class="sd">        A trail e.g. HighFine.</span>
+<span class="sd">    config : yaml</span>
+<span class="sd">        The configuration file.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    mne object</span>
+<span class="sd">        A raw mne object.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Get trail path</span>
+    <span class="n">trial_path</span> <span class="o">=</span> <span class="n">get_trial_path</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">trial</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+    <span class="c1"># Get the EMG data</span>
+    <span class="n">emg_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">genfromtxt</span><span class="p">(</span><span class="n">trial_path</span><span class="p">,</span>
+                             <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+                             <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span>
+                             <span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                             <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span>
+                             <span class="n">skip_footer</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span>
+                             <span class="n">skip_header</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+    <span class="n">trial_start</span><span class="p">,</span> <span class="n">trial_end</span><span class="p">,</span> <span class="n">sfreq</span> <span class="o">=</span> <span class="n">get_trail_time</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">trial</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+    <span class="c1"># Create mne raw object</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">create_info</span><span class="p">(</span><span class="n">ch_names</span><span class="o">=</span><span class="p">[</span>
+        <span class="s1">&#39;emg_1&#39;</span><span class="p">,</span> <span class="s1">&#39;emg_2&#39;</span><span class="p">,</span> <span class="s1">&#39;emg_3&#39;</span><span class="p">,</span> <span class="s1">&#39;emg_4&#39;</span><span class="p">,</span> <span class="s1">&#39;emg_5&#39;</span><span class="p">,</span> <span class="s1">&#39;emg_6&#39;</span><span class="p">,</span> <span class="s1">&#39;emg_7&#39;</span><span class="p">,</span> <span class="s1">&#39;emg_8&#39;</span>
+    <span class="p">],</span>
+                           <span class="n">ch_types</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;misc&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">emg_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                           <span class="n">sfreq</span><span class="o">=</span><span class="n">sfreq</span><span class="p">)</span>
+
+    <span class="c1"># Create mne raw file</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">RawArray</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="c1"># Additional information</span>
+    <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;subject_info&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">subject</span>
+    <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;experimenter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;hemanth&#39;</span>
+
+    <span class="k">return</span> <span class="n">raw</span><span class="p">,</span> <span class="p">[</span><span class="n">trial_start</span><span class="p">,</span> <span class="n">trial_end</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="get_robot_data"><a class="viewcode-back" href="../../source/data.html#data.create_data.get_robot_data">[docs]</a><span class="k">def</span> <span class="nf">get_robot_data</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">trial</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get the force and velocity data of a subject and a trial.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    subject : str</span>
+<span class="sd">        A string of subject ID e.g. 7707.</span>
+<span class="sd">    trial : str</span>
+<span class="sd">        A trail e.g. HighFine..</span>
+<span class="sd">    config : yaml</span>
+<span class="sd">        The configuration file.</span>
+<span class="sd">    Returns</span>
+<span class="sd">    ----------</span>
+<span class="sd">    robot_data : array</span>
+<span class="sd">        A numpy array containing  total_force, velocity</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">trial_path</span> <span class="o">=</span> <span class="n">get_trial_path</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">trial</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">robot</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">genfromtxt</span><span class="p">(</span><span class="n">trial_path</span><span class="p">,</span>
+                         <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+                         <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span>
+                         <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">20</span><span class="p">],</span>
+                         <span class="n">skip_footer</span><span class="o">=</span><span class="mi">1250</span><span class="p">,</span>
+                         <span class="n">skip_header</span><span class="o">=</span><span class="mi">1250</span><span class="p">)</span>
+    <span class="n">time_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">genfromtxt</span><span class="p">(</span><span class="n">trial_path</span><span class="p">,</span>
+                              <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                              <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span>
+                              <span class="n">usecols</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                              <span class="n">skip_footer</span><span class="o">=</span><span class="mi">1250</span><span class="p">,</span>
+                              <span class="n">skip_header</span><span class="o">=</span><span class="mi">1250</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="c1"># Total force</span>
+    <span class="n">total_force</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Average time</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="p">[</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s1">&#39;%H:%M:%S:</span><span class="si">%f</span><span class="s1">&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">time_data</span><span class="p">]</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>  <span class="c1"># convert to numpy</span>
+
+    <span class="c1"># Convert to seconds</span>
+    <span class="n">helper</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">())</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="n">helper</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">time</span><span class="p">))</span>  <span class="c1"># average time difference</span>
+
+    <span class="c1"># x and y co-ordinates of the end effector</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">])</span>
+    <span class="n">dy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">])</span>
+    <span class="n">velocity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">dx</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">dy</span><span class="p">))</span> <span class="o">/</span> <span class="n">dt</span>
+
+    <span class="c1"># Stack all the vectors</span>
+    <span class="n">robot_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">total_force</span><span class="p">,</span> <span class="n">velocity</span><span class="p">))</span><span class="o">.</span><span class="n">T</span>
+
+    <span class="k">return</span> <span class="n">robot_data</span></div>
+
+
+<div class="viewcode-block" id="create_emg_data"><a class="viewcode-back" href="../../source/data.html#data.create_data.create_emg_data">[docs]</a><span class="k">def</span> <span class="nf">create_emg_data</span><span class="p">(</span><span class="n">subjects</span><span class="p">,</span> <span class="n">trials</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create the data with each subject data in a dictionary.</span>
+
+<span class="sd">    Parameter</span>
+<span class="sd">    ----------</span>
+<span class="sd">    subject : list</span>
+<span class="sd">        String of subject ID e.g. 7707</span>
+<span class="sd">    error_type : list</span>
+<span class="sd">        Types of trials i.e., e.g. HighFine.</span>
+<span class="sd">    config : yaml</span>
+<span class="sd">        The configuration file</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dict</span>
+<span class="sd">        A data (dict) of all the subjects with different conditions</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">emg_data</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="c1"># Loop over all subjects and error types</span>
+    <span class="k">for</span> <span class="n">subject</span> <span class="ow">in</span> <span class="n">subjects</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">defaultdict</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">trial</span> <span class="ow">in</span> <span class="n">trials</span><span class="p">:</span>
+            <span class="n">raw_data</span><span class="p">,</span> <span class="n">trial_time</span> <span class="o">=</span> <span class="n">get_raw_emg</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">trial</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;emg&#39;</span><span class="p">][</span><span class="n">trial</span><span class="p">]</span> <span class="o">=</span> <span class="n">raw_data</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">][</span><span class="n">trial</span><span class="p">]</span> <span class="o">=</span> <span class="n">trial_time</span>
+        <span class="n">emg_data</span><span class="p">[</span><span class="s1">&#39;subject_&#39;</span> <span class="o">+</span> <span class="n">subject</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+
+    <span class="k">return</span> <span class="n">emg_data</span></div>
+
+
+<div class="viewcode-block" id="get_emg_epoch"><a class="viewcode-back" href="../../source/data.html#data.create_data.get_emg_epoch">[docs]</a><span class="k">def</span> <span class="nf">get_emg_epoch</span><span class="p">(</span><span class="n">raw_emg</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create the epoch data from raw data.</span>
+
+<span class="sd">    Parameter</span>
+<span class="sd">    ----------</span>
+<span class="sd">    raw_emg : mne raw object</span>
+<span class="sd">        String of subject ID e.g. 7707</span>
+<span class="sd">    time : list</span>
+<span class="sd">        A list with start and end time</span>
+<span class="sd">    config : yaml</span>
+<span class="sd">        The configuration file</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mne epoch data</span>
+<span class="sd">        A data (dict) of all the subjects with different conditions</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Parameters</span>
+    <span class="n">epoch_length</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;epoch_length&#39;</span><span class="p">]</span>
+    <span class="n">overlap</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;overlap&#39;</span><span class="p">]</span>
+
+    <span class="n">raw_cropped</span> <span class="o">=</span> <span class="n">raw_emg</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="n">tmin</span><span class="o">=</span><span class="n">time</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tmax</span><span class="o">=</span><span class="n">time</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">events</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">make_fixed_length_events</span><span class="p">(</span><span class="n">raw_cropped</span><span class="p">,</span>
+                                          <span class="n">duration</span><span class="o">=</span><span class="n">epoch_length</span><span class="p">,</span>
+                                          <span class="n">overlap</span><span class="o">=</span><span class="n">epoch_length</span> <span class="o">*</span> <span class="n">overlap</span><span class="p">)</span>
+
+    <span class="n">epochs</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span><span class="p">(</span><span class="n">raw_cropped</span><span class="p">,</span>
+                        <span class="n">events</span><span class="p">,</span>
+                        <span class="n">tmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                        <span class="n">tmax</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;epoch_length&#39;</span><span class="p">],</span>
+                        <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">epochs</span></div>
+
+
+<div class="viewcode-block" id="create_emg_epoch"><a class="viewcode-back" href="../../source/data.html#data.create_data.create_emg_epoch">[docs]</a><span class="k">def</span> <span class="nf">create_emg_epoch</span><span class="p">(</span><span class="n">subjects</span><span class="p">,</span> <span class="n">trials</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create the data with each subject data in a dictionary.</span>
+
+<span class="sd">    Parameter</span>
+<span class="sd">    ----------</span>
+<span class="sd">    subject : list</span>
+<span class="sd">        String of subject ID e.g. 7707</span>
+<span class="sd">    error_type : list</span>
+<span class="sd">        Types of trials i.e., e.g. HighFine.</span>
+<span class="sd">    config : yaml</span>
+<span class="sd">        The configuration file</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dict</span>
+<span class="sd">        A data (dict) of all the subjects with different conditions</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Empty dictionary</span>
+    <span class="n">emg_epochs</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># Load the data</span>
+    <span class="n">read_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;raw_emg_data&#39;</span><span class="p">]</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">dd</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">read_path</span><span class="p">))</span>
+
+    <span class="c1"># Loop over all subjects and error types</span>
+    <span class="k">for</span> <span class="n">subject</span> <span class="ow">in</span> <span class="n">subjects</span><span class="p">:</span>
+        <span class="n">temp</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">defaultdict</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">trial</span> <span class="ow">in</span> <span class="n">trials</span><span class="p">:</span>
+            <span class="n">raw_emg</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;subject_&#39;</span> <span class="o">+</span> <span class="n">subject</span><span class="p">][</span><span class="s1">&#39;emg&#39;</span><span class="p">][</span><span class="n">trial</span><span class="p">]</span>
+            <span class="n">time</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;subject_&#39;</span> <span class="o">+</span> <span class="n">subject</span><span class="p">][</span><span class="s1">&#39;time&#39;</span><span class="p">][</span><span class="n">trial</span><span class="p">]</span>
+
+            <span class="c1"># Create epoch data</span>
+            <span class="n">temp</span><span class="p">[</span><span class="s1">&#39;emg&#39;</span><span class="p">][</span><span class="n">trial</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_emg_epoch</span><span class="p">(</span><span class="n">raw_emg</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+        <span class="n">emg_epochs</span><span class="p">[</span><span class="s1">&#39;subject_&#39;</span> <span class="o">+</span> <span class="n">subject</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp</span>
+
+    <span class="k">return</span> <span class="n">emg_epochs</span></div>
+
+
+<div class="viewcode-block" id="create_robot_dataframe"><a class="viewcode-back" href="../../source/data.html#data.create_data.create_robot_dataframe">[docs]</a><span class="k">def</span> <span class="nf">create_robot_dataframe</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get subject independent data (pooled data).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    config : yaml</span>
+<span class="sd">        The configuration file</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    features, labels, tags</span>
+<span class="sd">        2 arrays features and labels.</span>
+<span class="sd">        A tag determines whether the data point is used in training.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;total_force&#39;</span><span class="p">,</span> <span class="s1">&#39;velocity&#39;</span><span class="p">,</span> <span class="s1">&#39;task&#39;</span><span class="p">,</span> <span class="s1">&#39;damping&#39;</span><span class="p">,</span> <span class="s1">&#39;subject&#39;</span><span class="p">]</span>
+    <span class="n">dataframe</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">subject</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;subjects&#39;</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">trial</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;trials&#39;</span><span class="p">]:</span>
+            <span class="n">temp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">get_robot_data</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">trial</span><span class="p">,</span> <span class="n">config</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+            <span class="c1"># Form a dataframe and sample the array simultaneously</span>
+            <span class="n">temp_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">temp</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+                                   <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;total_force&#39;</span><span class="p">,</span> <span class="s1">&#39;velocity&#39;</span><span class="p">])</span>
+
+            <span class="c1"># Add other information</span>
+            <span class="n">temp_df</span><span class="p">[</span><span class="s1">&#39;subject&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">subject</span>
+            <span class="k">if</span> <span class="n">trial</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;Gross&#39;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">temp_df</span><span class="p">[</span><span class="s1">&#39;task&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Gross&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">temp_df</span><span class="p">[</span><span class="s1">&#39;task&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Fine&#39;</span>
+
+            <span class="k">if</span> <span class="n">trial</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;High&#39;</span><span class="p">):</span>
+                <span class="n">temp_df</span><span class="p">[</span><span class="s1">&#39;damping&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Low&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">temp_df</span><span class="p">[</span><span class="s1">&#39;damping&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;High&#39;</span>
+
+            <span class="c1"># Append to the main dataframe</span>
+            <span class="n">dataframe</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">temp_df</span><span class="p">],</span>
+                                  <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                  <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">dataframe</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 
+      <span class="lastupdated">
+        Last updated on Aug 16, 2019.
+      </span>
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

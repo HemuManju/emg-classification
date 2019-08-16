@@ -95,7 +95,8 @@ with skip_run('skip', 'torch_pooled_data') as check, check():
     save_path = str(path)
     save_trained_pytorch_model(model, model_info, save_path, save_model=False)
 
-with skip_run('skip', 'average_accuracy') as check, check():
+with skip_run('skip', 'plot_average_accuracy') as check, check():
+    sns.set(font_scale=1.2)
     plot_average_model_accuracy('experiment_0', config)
 
 with skip_run('skip', 'bar_plot') as check, check():

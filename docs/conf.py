@@ -17,16 +17,22 @@ import sys
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-# sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('../src/'))
 
 # -- General configuration -----------------------------------------------------
+#-------------------------------------
+# sphinx-apidoc -E -M -o source/ ../src
+#-------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
 # needs_sphinx = '1.0'
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = []
+extensions = [
+    'sphinx.ext.napoleon', 'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
+    'sphinx.ext.viewcode', 'sphinx.ext.inheritance_diagram'
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -41,7 +47,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'emg-classification-study'
+project = u'Human effort classification in pHRI'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -60,7 +66,7 @@ release = '0.1'
 # non-false value, then it is used:
 # today = ''
 # Else, today_fmt is used as the format for a strftime call.
-# today_fmt = '%B %d, %Y'
+today_fmt = '%B %d, %Y'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -74,11 +80,11 @@ exclude_patterns = ['_build']
 
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
-# add_module_names = True
+add_module_names = False
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
-# show_authors = False
+show_authors = True
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -86,12 +92,11 @@ pygments_style = 'sphinx'
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
 
-
 # -- Options for HTML output ---------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
+html_theme = "sphinx_rtd_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -120,11 +125,11 @@ html_theme = 'default'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
-# html_last_updated_fmt = '%b %d, %Y'
+html_last_updated_fmt = '%b %d, %Y'
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
@@ -164,8 +169,9 @@ html_static_path = ['_static']
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'emg-classification-studydoc'
+htmlhelp_basename = 'Human effort classification in pHRI doc'
 
+html_style = 'css/custom.css'
 
 # -- Options for LaTeX output --------------------------------------------------
 
@@ -183,10 +189,9 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ('index',
-     'emg-classification-study.tex',
-     u'emg-classification-study Documentation',
-     u"Hemanth Manjunathaa", 'manual'),
+    ('index', 'emg-classification-study.tex',
+     u'emg-classification-study Documentation', u"Hemanth Manjunathaa",
+     'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -209,19 +214,17 @@ latex_documents = [
 # If false, no module index is generated.
 # latex_domain_indices = True
 
-
 # -- Options for manual page output --------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'emg-classification-study', u'emg-classification-study Documentation',
-     [u"Hemanth Manjunathaa"], 1)
+    ('index', 'emg-classification-study',
+     u'emg-classification-study Documentation', [u"Hemanth Manjunathaa"], 1)
 ]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
-
 
 # -- Options for Texinfo output ------------------------------------------------
 
@@ -229,9 +232,11 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    ('index', 'emg-classification-study', u'emg-classification-study Documentation',
-     u"Hemanth Manjunathaa", 'emg-classification-study',
-     'Classification of effort in Human robot interaction using EMG.', 'Miscellaneous'),
+    ('index', 'emg-classification-study',
+     u'emg-classification-study Documentation', u"Hemanth Manjunathaa",
+     'emg-classification-study',
+     'Classification of effort in Human robot interaction using EMG.',
+     'Miscellaneous'),
 ]
 
 # Documents to append as an appendix to all manuals.

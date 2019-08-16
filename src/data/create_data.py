@@ -278,6 +278,7 @@ def get_emg_epoch(raw_emg, time, config):
     events = mne.make_fixed_length_events(raw_cropped,
                                           duration=epoch_length,
                                           overlap=epoch_length * overlap)
+
     epochs = mne.Epochs(raw_cropped,
                         events,
                         tmin=0,

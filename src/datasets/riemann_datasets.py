@@ -145,7 +145,7 @@ def subject_dependent_data(config):
     rus.fit_resample(y, y)
 
     # Store them in dictionary
-    features = x[rus.sample_indices_, :, :] * 1e6
+    features = x[rus.sample_indices_, :, :]
     labels = y[rus.sample_indices_, :]
     tags = tags[rus.sample_indices_, :]
 
@@ -180,7 +180,7 @@ def subject_specific_data(subject, config):
     rus.fit_resample(y, y)
 
     # Store them in dictionary
-    features = x[rus.sample_indices_, :, :] * 1e6
+    features = x[rus.sample_indices_, :, :]
     labels = y[rus.sample_indices_, :]
     tags = tags[rus.sample_indices_, :]
 
