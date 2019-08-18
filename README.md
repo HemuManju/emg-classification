@@ -1,6 +1,8 @@
 emg-classification-study
 ==============================
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Classification of effort in Human robot interaction using EMG.
 
 Documentation: <https://hemumanju.github.io/emg-classification/> <br />
