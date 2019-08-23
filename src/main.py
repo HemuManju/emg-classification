@@ -22,7 +22,8 @@ from visualization.visualise import (plot_average_model_accuracy, plot_bar)
 from utils import (skip_run, save_data, save_trained_pytorch_model)
 
 # The configuration file
-config = yaml.load(open('config.yml'), Loader=yaml.SafeLoader)
+
+config = yaml.load(open('.config.yml'), Loader=yaml.SafeLoader)
 
 with skip_run('skip', 'create_emg_data') as check, check():
     data = create_emg_data(config['subjects'], config['trials'], config)
@@ -99,7 +100,7 @@ with skip_run('skip', 'plot_average_accuracy') as check, check():
     sns.set(font_scale=1.2)
     plot_average_model_accuracy('experiment_0', config)
 
-with skip_run('skip', 'bar_plot') as check, check():
+with skip_run('skip', 'plot_bar_graph') as check, check():
     # Get the data
     dataframe = matlab_dataframe(config)
 

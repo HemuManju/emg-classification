@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from .utils import (visual_log, classification_accuracy, create_model_info,
+from .utils import (classification_accuracy, create_model_info, visual_log,
                     weights_init)
 
 
