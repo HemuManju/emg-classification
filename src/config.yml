@@ -1,5 +1,5 @@
 # EEG data parameters
-epoch_length: 2
+epoch_length: 1
 n_freqs: 6
 n_electrodes: 8
 n_class: 3
@@ -32,7 +32,7 @@ subjects:
     '8823',
     '8824',
   ]
-test_subjects: []
+n_test_subjects: 4
 trials: ['HighFine', 'HighGross', 'LowFine', 'LowGross']
 
 # Path

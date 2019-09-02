@@ -1,4 +1,5 @@
 from pathlib import Path
+import random
 
 import deepdish as dd
 import numpy as np
@@ -6,8 +7,43 @@ from imblearn.under_sampling import RandomUnderSampler
 from sklearn.model_selection import train_test_split
 
 
-def train_test_data(features, labels, leave_tags, config):
-    """Short summary.
+def get_data_split_ids(labels, leave_tags, test_size=0.15):
+    """Generators training, validation, and training
+    indices to be used by Dataloader.
+
+    Parameters
+    ----------
+    labels : array
+        An array of labels.
+    test_size : float
+        Test size e.g. 0.15 is 15% of whole data.
+
+    Returns
+    -------
+    dict
+        A dictionary of ids corresponding to train, validate, and test.
+
+    """
+
+    # Create an empty dictionary
+    split_ids = {}
+
+    if (leave_tags == 0).any():
+        train_id = np.nonzero(leave_tags)[0]
+        test_id = np.nonzero(1 - leave_tags)[0]
+    else:
+        ids = np.arange(labels.shape[0])
+        train_id, test_id, _, _ = train_test_split(ids,
+                                                   ids * 0,
+                                                   test_size=2 * test_size)
+    split_ids['training'] = train_id
+    split_ids['testing'] = test_id
+
+    return split_ids
+
+
+def train_test_data(config, leave_out=False):
+    """A function to get train and test data.
 
     Parameters
     ----------
@@ -27,31 +63,30 @@ def train_test_data(features, labels, leave_tags, config):
 
     """
     data = {}
-    labels = np.argmax(labels, axis=1)  # Convert to class int
-
-    # Train test split
-    id = np.arange(features.shape[0])
-    if (leave_tags == 0).any():
-        train_id = np.nonzero(leave_tags)[0]
-        test_id = np.nonzero(1 - leave_tags)[0]
+    # Get the features and labels
+    if leave_out:
+        features, labels, leave_tags = subject_dependent_data(config)
     else:
-        train_id, test_id, _, _ = train_test_split(id,
-                                                   id * 0,
-                                                   test_size=2 *
-                                                   config['TEST_SIZE'])
+        features, labels, leave_tags = subject_independent_data(config)
 
+    # Get training, validation, and testing split_ids
+    split_ids = get_data_split_ids(labels,
+                                   leave_tags,
+                                   test_size=config['TEST_SIZE'])
+
+    labels = np.argmax(labels, axis=1)  # Convert to class int
     # Training
-    data['train_x'] = features[train_id, :, :]
-    data['train_y'] = labels[train_id]
+    data['train_x'] = features[split_ids['training'], :, :]
+    data['train_y'] = labels[split_ids['training']]
 
     # Testing
-    data['test_x'] = features[test_id, :, :]
-    data['test_y'] = labels[test_id]
+    data['test_x'] = features[split_ids['testing'], :, :]
+    data['test_y'] = labels[split_ids['testing']]
 
     return data
 
 
-def subject_pooled_data(config):
+def subject_independent_data(config):
     """Get subject independent data (pooled data).
 
     Parameters
@@ -61,7 +96,7 @@ def subject_pooled_data(config):
 
     Returns
     -------
-    features, labels, tags
+    features, labels, leave_tags
         2 arrays features and labels.
         A tag determines whether the data point is used in training.
 
@@ -76,14 +111,15 @@ def subject_pooled_data(config):
     # Empty array (list)
     x = []
     y = []
-    tags = np.empty((0, 1))
+    leave_tags = np.empty((0, 1))
 
     for subject in subjects:
         x_temp = data['subject_' + subject]['features']
         y_temp = data['subject_' + subject]['labels']
         x.append(x_temp)
         y.append(y_temp)
-        tags = np.concatenate((tags, y_temp[:, 0:1] * 0 + 1), axis=0)
+        leave_tags = np.concatenate((leave_tags, y_temp[:, 0:1] * 0 + 1),
+                                    axis=0)
 
     # Convert to array
     x = np.concatenate(x, axis=0)
@@ -96,9 +132,9 @@ def subject_pooled_data(config):
     # Store them in dictionary
     features = x[rus.sample_indices_, :, :]
     labels = y[rus.sample_indices_, :]
-    tags = tags[rus.sample_indices_, :]
+    leave_tags = leave_tags[rus.sample_indices_, :]
 
-    return features, labels, tags
+    return features, labels, leave_tags
 
 
 def subject_dependent_data(config):
@@ -121,24 +157,28 @@ def subject_dependent_data(config):
 
     # Parameters
     subjects = config['subjects']
-    epoch_length = config['epoch_length']
-    sfreq = config['sfreq']
+    test_subjects = random.sample(subjects, config['n_test_subjects'])
 
-    # Subject information
-    subjects = config['subjects']
-    x = np.empty((0, config['n_electrodes'], epoch_length * sfreq))
-    y = np.empty((0, config['n_class']))
-    tags = np.empty((0, 1))
+    # Empty array (list)
+    x = []
+    y = []
+    leave_tags = np.empty((0, 1))
 
     for subject in subjects:
         x_temp = data['subject_' + subject]['features']
         y_temp = data['subject_' + subject]['labels']
-        x = np.concatenate((x, x_temp), axis=0)
-        y = np.concatenate((y, y_temp), axis=0)
-        if subject in config['test_subjects']:
-            tags = np.concatenate((tags, y_temp[:, 0:1] * 0), axis=0)
+        x.append(x_temp)
+        y.append(y_temp)
+        if subject in test_subjects:
+            leave_tags = np.concatenate((leave_tags, y_temp[:, 0:1] * 0),
+                                        axis=0)
         else:
-            tags = np.concatenate((tags, y_temp[:, 0:1] * 0 + 1), axis=0)
+            leave_tags = np.concatenate((leave_tags, y_temp[:, 0:1] * 0 + 1),
+                                        axis=0)
+
+    # Convert to array
+    x = np.concatenate(x, axis=0)
+    y = np.concatenate(y, axis=0)
 
     # Balance the dataset
     rus = RandomUnderSampler()
@@ -147,9 +187,9 @@ def subject_dependent_data(config):
     # Store them in dictionary
     features = x[rus.sample_indices_, :, :]
     labels = y[rus.sample_indices_, :]
-    tags = tags[rus.sample_indices_, :]
+    leave_tags = leave_tags[rus.sample_indices_, :]
 
-    return features, labels, tags
+    return features, labels, leave_tags
 
 
 def subject_specific_data(subject, config):
@@ -173,7 +213,7 @@ def subject_specific_data(subject, config):
     # Get the data
     x = data['subject_' + subject]['features']
     y = data['subject_' + subject]['labels']
-    tags = y[:, 0:1] * 0 + 1
+    leave_tags = y[:, 0:1] * 0 + 1
 
     # Balance the dataset
     rus = RandomUnderSampler()
@@ -182,6 +222,6 @@ def subject_specific_data(subject, config):
     # Store them in dictionary
     features = x[rus.sample_indices_, :, :]
     labels = y[rus.sample_indices_, :]
-    tags = tags[rus.sample_indices_, :]
+    leave_tags = leave_tags[rus.sample_indices_, :]
 
-    return features, labels, tags
+    return features, labels, leave_tags

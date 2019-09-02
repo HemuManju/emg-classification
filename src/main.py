@@ -6,8 +6,8 @@ import seaborn as sns
 from data.clean_data import clean_epoch_data
 from data.create_data import (create_emg_data, create_emg_epoch,
                               create_robot_dataframe)
-from datasets.riemann_datasets import subject_pooled_data, train_test_data
-from datasets.torch_datasets import pooled_data_iterator
+from datasets.riemann_datasets import train_test_data
+from datasets.torch_datasets import train_test_iterator
 from datasets.statistics_dataset import matlab_dataframe
 
 from models.riemann_models import (svm_tangent_space_classifier,
@@ -22,8 +22,8 @@ from visualization.visualise import (plot_average_model_accuracy, plot_bar)
 from utils import (skip_run, save_data, save_trained_pytorch_model)
 
 # The configuration file
-
-config = yaml.load(open('.config.yml'), Loader=yaml.SafeLoader)
+config_path = Path(__file__).parents[1] / 'src/config.yml'
+config = yaml.load(open(str(config_path)), Loader=yaml.SafeLoader)
 
 with skip_run('skip', 'create_emg_data') as check, check():
     data = create_emg_data(config['subjects'], config['trials'], config)
@@ -70,27 +70,38 @@ with skip_run('skip', 'statistical_analysis') as check, check():
                                      dependent='velocity',
                                      independent=var)
 
-with skip_run('skip', 'svm_pooled_data') as check, check():
-    # Load main data
-    features, labels, leave_tags = subject_pooled_data(config)
-
+with skip_run('skip', 'svm_subject_independent') as check, check():
     # Get the data
-    data = train_test_data(features, labels, leave_tags, config)
+    data = train_test_data(config, leave_out=False)
 
     # Train the classifier and predict on test data
     clf = svm_tangent_space_classifier(data['train_x'], data['train_y'])
     svm_tangent_space_prediction(clf, data['test_x'], data['test_y'])
 
-with skip_run('skip', 'svm_cross_validated_pooled_data') as check, check():
-    # Load main data
-    features, labels, leave_tags = subject_pooled_data(config)
-
+with skip_run('run', 'svm_subject_dependent') as check, check():
     # Get the data
-    data = train_test_data(features, labels, leave_tags, config)
+    data = train_test_data(config, leave_out=True)
+
+    # Train the classifier and predict on test data
+    clf = svm_tangent_space_classifier(data['train_x'], data['train_y'])
+    svm_tangent_space_prediction(clf, data['test_x'], data['test_y'])
+
+with skip_run('skip', 'svm_crossval_subject_independent') as check, check():
+    # Get the data
+    data = train_test_data(config, leave_out=False)
     svm_tangent_space_cross_validate(data)
 
-with skip_run('skip', 'torch_pooled_data') as check, check():
-    dataset = pooled_data_iterator(config)
+with skip_run('skip', 'torch_subject_independent') as check, check():
+
+    dataset = train_test_iterator(config, leave_out=False)
+    model, model_info = train_torch_model(ShallowERPNet, config, dataset)
+    path = Path(__file__).parents[1] / config['trained_model_path']
+    save_path = str(path)
+    save_trained_pytorch_model(model, model_info, save_path, save_model=False)
+
+with skip_run('skip', 'torch_subject_dependent') as check, check():
+
+    dataset = train_test_iterator(config, leave_out=True)
     model, model_info = train_torch_model(ShallowERPNet, config, dataset)
     path = Path(__file__).parents[1] / config['trained_model_path']
     save_path = str(path)

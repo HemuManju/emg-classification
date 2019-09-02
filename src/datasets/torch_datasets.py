@@ -1,4 +1,5 @@
 from pathlib import Path
+import random
 
 import torch
 import numpy as np
@@ -10,52 +11,24 @@ from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 
 
-class SubjectSpecificDataset(Dataset):
-    """A subject specific dataset class.
-
-    Parameters
-    ----------
-    x : array
-        Input array of the features.
-
-    Attributes
-    ----------
-    length : int
-        Length of the dataset.
-
-    """
-    def __init__(self, x_data):
-        super(SubjectSpecificDataset, self).__init__()
-        self.length = x_data.shape[0]
-        self.features = x_data
-
-    def __getitem__(self, index):
-        # Convert to torch tensors
-        x = torch.from_numpy(self.featurs[index, :, :]).type(torch.float32)
-        return x
-
-    def __len__(self):
-        return self.length
-
-
-class PooledDataset(Dataset):
+class TorchDataset(Dataset):
     """All subject dataset class.
 
     Parameters
     ----------
-    ids_list : list
+    split_ids : list
         ids list of training or validation or traning data.
 
     Attributes
     ----------
-    ids_list
+    split_ids
 
     """
-    def __init__(self, features, labels, ids_list):
-        super(PooledDataset, self).__init__()
-        self.ids_list = ids_list
-        self.features = features[self.ids_list, :, :]
-        self.labels = labels[self.ids_list, :]
+    def __init__(self, features, labels, split_ids):
+        super(TorchDataset, self).__init__()
+        self.split_ids = split_ids
+        self.features = features[self.split_ids, :, :]
+        self.labels = labels[self.split_ids, :]
 
     def __getitem__(self, index):
         # Read only specific data and convert to torch tensors
@@ -67,60 +40,7 @@ class PooledDataset(Dataset):
         return self.features.shape[0]
 
 
-def subject_pooled_data(config):
-    """Get subject independent data (pooled data).
-
-    Parameters
-    ----------
-    config : yaml
-        The configuration file
-
-    Returns
-    -------
-    features, labels, tags
-        2 arrays features and labels.
-        A tag determines whether the data point is used in training.
-
-    """
-
-    path = str(Path(__file__).parents[2] / config['clean_emg_data'])
-    data = dd.io.load(path)
-
-    # Parameters
-    subjects = config['subjects']
-
-    # Subject information
-    subjects = config['subjects']
-
-    # Empty array (list)
-    x = []
-    y = []
-    tags = np.empty((0, 1))
-
-    for subject in subjects:
-        x_temp = data['subject_' + subject]['features']
-        y_temp = data['subject_' + subject]['labels']
-        x.append(x_temp)
-        y.append(y_temp)
-        tags = np.concatenate((tags, y_temp[:, 0:1] * 0 + 1), axis=0)
-
-    # Convert to array
-    x = np.concatenate(x, axis=0)
-    y = np.concatenate(y, axis=0)
-
-    # Balance the dataset
-    rus = RandomUnderSampler()
-    rus.fit_resample(y, y)
-
-    # Store them in dictionary
-    features = x[rus.sample_indices_, :, :]
-    labels = y[rus.sample_indices_, :]
-    tags = tags[rus.sample_indices_, :]
-
-    return features, labels, tags
-
-
-def data_split_ids(labels, test_size=0.15):
+def get_data_split_ids(labels, leave_tags, test_size=0.15):
     """Generators training, validation, and training
     indices to be used by Dataloader.
 
@@ -137,67 +57,189 @@ def data_split_ids(labels, test_size=0.15):
         A dictionary of ids corresponding to train, validate, and test.
 
     """
-    id = np.arange(labels.shape[0])
+
     # Create an empty dictionary
-    ids_list = {}
+    split_ids = {}
 
-    # Split train, validation, and testing id
-    train_id, test_id, _, _ = train_test_split(id,
-                                               id * 0,
-                                               test_size=2 * test_size)
-    test_id, validate_id, _, _ = train_test_split(test_id,
-                                                  test_id * 0,
-                                                  test_size=0.5)
+    if (leave_tags == 0).any():
+        train_id = np.nonzero(leave_tags)[0]
+        test_id = np.nonzero(1 - leave_tags)[0]
+        test_id, validate_id, _, _ = train_test_split(test_id,
+                                                      test_id * 0,
+                                                      test_size=0.5)
+    else:
+        ids = np.arange(labels.shape[0])
+        train_id, test_id, _, _ = train_test_split(ids,
+                                                   ids * 0,
+                                                   test_size=2 * test_size)
+        test_id, validate_id, _, _ = train_test_split(test_id,
+                                                      test_id * 0,
+                                                      test_size=0.5)
+    split_ids['training'] = train_id
+    split_ids['validation'] = validate_id
+    split_ids['testing'] = test_id
 
-    ids_list['training'] = train_id
-    ids_list['validation'] = validate_id
-    ids_list['testing'] = test_id
-
-    return ids_list
+    return split_ids
 
 
-def pooled_data_iterator(config):
-    """Create data iterators for torch models.
+def subject_independent_data(config):
+    """Get subject independent data (pooled data).
 
     Parameters
     ----------
     config : yaml
+        The configuration file
+
+    Returns
+    -------
+    features, labels, leave_leave_tags
+        2 arrays features and labels.
+        A tag determines whether the data point is used in training.
+
+    """
+
+    path = str(Path(__file__).parents[2] / config['clean_emg_data'])
+    data = dd.io.load(path)
+
+    # Parameters
+    subjects = config['subjects']
+
+    # Empty array (list)
+    x = []
+    y = []
+    leave_tags = np.empty((0, 1))
+
+    for subject in subjects:
+        x_temp = data['subject_' + subject]['features']
+        y_temp = data['subject_' + subject]['labels']
+        x.append(x_temp)
+        y.append(y_temp)
+        leave_tags = np.concatenate((leave_tags, y_temp[:, 0:1] * 0 + 1),
+                                    axis=0)
+
+    # Convert to array
+    x = np.concatenate(x, axis=0)
+    y = np.concatenate(y, axis=0)
+
+    # Balance the dataset
+    rus = RandomUnderSampler()
+    rus.fit_resample(y, y)
+
+    # Store them in dictionary
+    features = x[rus.sample_indices_, :, :]
+    labels = y[rus.sample_indices_, :]
+    leave_tags = leave_tags[rus.sample_indices_, :]
+
+    return features, labels, leave_tags
+
+
+def subject_dependent_data(config):
+    """Get subject dependent data.
+
+    Parameters
+    ----------
+    config : yaml
+        The configuration file
+
+    Returns
+    -------
+    features, labels
+        2 arrays features and labels
+
+    """
+
+    path = str(Path(__file__).parents[2] / config['clean_emg_data'])
+    data = dd.io.load(path)
+
+    # Parameters
+    subjects = config['subjects']
+    test_subjects = random.sample(subjects, config['n_test_subjects'])
+
+    # Empty array (list)
+    x = []
+    y = []
+    leave_tags = np.empty((0, 1))
+
+    for subject in subjects:
+        x_temp = data['subject_' + subject]['features']
+        y_temp = data['subject_' + subject]['labels']
+        x.append(x_temp)
+        y.append(y_temp)
+        if subject in test_subjects:
+            leave_tags = np.concatenate((leave_tags, y_temp[:, 0:1] * 0),
+                                        axis=0)
+        else:
+            leave_tags = np.concatenate((leave_tags, y_temp[:, 0:1] * 0 + 1),
+                                        axis=0)
+
+    # Convert to array
+    x = np.concatenate(x, axis=0)
+    y = np.concatenate(y, axis=0)
+
+    # Balance the dataset
+    rus = RandomUnderSampler()
+    rus.fit_resample(y, y)
+
+    # Store them in dictionary
+    features = x[rus.sample_indices_, :, :]
+    labels = y[rus.sample_indices_, :]
+    leave_tags = leave_tags[rus.sample_indices_, :]
+
+    return features, labels, leave_tags
+
+
+def train_test_iterator(config, leave_out=False):
+    """A function to get train, validation, and test data.
+
+    Parameters
+    ----------
+    features : array
+        An array of features.
+    labels : array
+        True labels.
+    leave_tags : array
+        An array specifying whether a subject was left out of training.
+    config : yaml
         The configuration file.
+    leave_out : bool
+        Whether to leave out some subjects training and use them in testing
 
     Returns
     -------
     dict
-        A dictionary contaning traning, validation, and testing iterator.
+        A dict containing the train and test data.
 
     """
-
     # Parameters
     BATCH_SIZE = config['BATCH_SIZE']
     TEST_SIZE = config['TEST_SIZE']
 
     # Get the features and labels
-    features, labels, tags = subject_pooled_data(config)
+    if leave_out:
+        features, labels, leave_tags = subject_dependent_data(config)
+    else:
+        features, labels, leave_tags = subject_independent_data(config)
 
-    # Get training, validation, and testing ids_list
-    ids_list = data_split_ids(labels, test_size=TEST_SIZE)
+    # Get training, validation, and testing split_ids
+    split_ids = get_data_split_ids(labels, leave_tags, test_size=TEST_SIZE)
 
     # Initialise an empty dictionary
     data_iterator = {}
 
     # Create train, validation, test datasets and save them in a dictionary
-    train_data = PooledDataset(features, labels, ids_list['training'])
+    train_data = TorchDataset(features, labels, split_ids['training'])
     data_iterator['training'] = DataLoader(train_data,
                                            batch_size=BATCH_SIZE,
                                            shuffle=True,
                                            num_workers=10)
 
-    valid_data = PooledDataset(features, labels, ids_list['validation'])
+    valid_data = TorchDataset(features, labels, split_ids['validation'])
     data_iterator['validation'] = DataLoader(valid_data,
                                              batch_size=BATCH_SIZE,
                                              shuffle=True,
                                              num_workers=10)
 
-    test_data = PooledDataset(features, labels, ids_list['testing'])
+    test_data = TorchDataset(features, labels, split_ids['testing'])
     data_iterator['testing'] = DataLoader(test_data,
                                           batch_size=BATCH_SIZE,
                                           shuffle=True,
