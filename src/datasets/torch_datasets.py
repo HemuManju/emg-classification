@@ -82,6 +82,66 @@ def get_data_split_ids(labels, leave_tags, test_size=0.15):
     return split_ids
 
 
+def train_test_iterator(config, leave_out=False):
+    """A function to get train, validation, and test data.
+
+    Parameters
+    ----------
+    features : array
+        An array of features.
+    labels : array
+        True labels.
+    leave_tags : array
+        An array specifying whether a subject was left out of training.
+    config : yaml
+        The configuration file.
+    leave_out : bool
+        Whether to leave out some subjects training and use them in testing
+
+    Returns
+    -------
+    dict
+        A dict containing the train and test data.
+
+    """
+    # Parameters
+    BATCH_SIZE = config['BATCH_SIZE']
+    TEST_SIZE = config['TEST_SIZE']
+
+    # Get the features and labels
+    if leave_out:
+        features, labels, leave_tags = subject_dependent_data(config)
+    else:
+        features, labels, leave_tags = subject_independent_data(config)
+
+    # Get training, validation, and testing split_ids
+    split_ids = get_data_split_ids(labels, leave_tags, test_size=TEST_SIZE)
+
+    # Initialise an empty dictionary
+    data_iterator = {}
+
+    # Create train, validation, test datasets and save them in a dictionary
+    train_data = TorchDataset(features, labels, split_ids['training'])
+    data_iterator['training'] = DataLoader(train_data,
+                                           batch_size=BATCH_SIZE,
+                                           shuffle=True,
+                                           num_workers=10)
+
+    valid_data = TorchDataset(features, labels, split_ids['validation'])
+    data_iterator['validation'] = DataLoader(valid_data,
+                                             batch_size=BATCH_SIZE,
+                                             shuffle=True,
+                                             num_workers=10)
+
+    test_data = TorchDataset(features, labels, split_ids['testing'])
+    data_iterator['testing'] = DataLoader(test_data,
+                                          batch_size=BATCH_SIZE,
+                                          shuffle=True,
+                                          num_workers=10)
+
+    return data_iterator
+
+
 def subject_independent_data(config):
     """Get subject independent data (pooled data).
 
@@ -155,6 +215,9 @@ def subject_dependent_data(config):
     subjects = config['subjects']
     test_subjects = random.sample(subjects, config['n_test_subjects'])
 
+    # Print test subjects
+    print(test_subjects)
+
     # Empty array (list)
     x = []
     y = []
@@ -188,58 +251,56 @@ def subject_dependent_data(config):
     return features, labels, leave_tags
 
 
-def train_test_iterator(config, leave_out=False):
-    """A function to get train, validation, and test data.
+def subject_specific_data(config, subject):
+    """Get subject independent data (pooled data).
 
     Parameters
     ----------
-    features : array
-        An array of features.
-    labels : array
-        True labels.
-    leave_tags : array
-        An array specifying whether a subject was left out of training.
     config : yaml
-        The configuration file.
-    leave_out : bool
-        Whether to leave out some subjects training and use them in testing
+        The configuration file
+    subject : str
+        The subject ID for whom we need the data
 
     Returns
     -------
-    dict
-        A dict containing the train and test data.
+    features, labels, leave_leave_tags
+        2 arrays features and labels.
+        A tag determines whether the data point is used in training.
 
     """
+
     # Parameters
     BATCH_SIZE = config['BATCH_SIZE']
     TEST_SIZE = config['TEST_SIZE']
 
-    # Get the features and labels
-    if leave_out:
-        features, labels, leave_tags = subject_dependent_data(config)
-    else:
-        features, labels, leave_tags = subject_independent_data(config)
+    path = str(Path(__file__).parents[2] / config['clean_emg_data'])
+    data = dd.io.load(path)
 
-    # Get training, validation, and testing split_ids
-    split_ids = get_data_split_ids(labels, leave_tags, test_size=TEST_SIZE)
+    # Convert to array
+    x = data['subject_' + subject]['features']
+    y = data['subject_' + subject]['labels']
 
-    # Initialise an empty dictionary
+    # Balance the dataset
+    rus = RandomUnderSampler()
+    rus.fit_resample(y, y)
+    features = x[rus.sample_indices_, :, :]
+    labels = y[rus.sample_indices_, :]
+
+    # Create train and test
+    ids = np.arange(labels.shape[0])
+    train_id, test_id, _, _ = train_test_split(ids,
+                                               ids * 0,
+                                               test_size=1 - 2 * TEST_SIZE)
+
+    # Create train and test torch datasets and save them in a dictionary
     data_iterator = {}
-
-    # Create train, validation, test datasets and save them in a dictionary
-    train_data = TorchDataset(features, labels, split_ids['training'])
+    train_data = TorchDataset(features, labels, train_id)
     data_iterator['training'] = DataLoader(train_data,
                                            batch_size=BATCH_SIZE,
                                            shuffle=True,
                                            num_workers=10)
 
-    valid_data = TorchDataset(features, labels, split_ids['validation'])
-    data_iterator['validation'] = DataLoader(valid_data,
-                                             batch_size=BATCH_SIZE,
-                                             shuffle=True,
-                                             num_workers=10)
-
-    test_data = TorchDataset(features, labels, split_ids['testing'])
+    test_data = TorchDataset(features, labels, test_id)
     data_iterator['testing'] = DataLoader(test_data,
                                           batch_size=BATCH_SIZE,
                                           shuffle=True,

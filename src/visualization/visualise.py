@@ -88,7 +88,6 @@ def plot_model_accuracy(experiment, config, model_number):
     plt.ylabel('Accuracy')
     plt.tight_layout()
     figure_asthetics(ax)
-    plt.show()
 
     return None
 

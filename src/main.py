@@ -6,20 +6,25 @@ import seaborn as sns
 from data.clean_data import clean_epoch_data
 from data.create_data import (create_emg_data, create_emg_epoch,
                               create_robot_dataframe)
+from data.utils import save_data
+
 from datasets.riemann_datasets import train_test_data
-from datasets.torch_datasets import train_test_iterator
+from datasets.torch_datasets import (train_test_iterator,
+                                     subject_specific_data)
 from datasets.statistics_dataset import matlab_dataframe
 
 from models.riemann_models import (svm_tangent_space_classifier,
                                    svm_tangent_space_cross_validate,
                                    svm_tangent_space_prediction)
 from models.statistical_models import mixed_effect_model
-from models.torch_models import train_torch_model
 from models.torch_networks import ShallowERPNet
+from models.torch_models import (train_torch_model, transfer_torch_model)
+from models.utils import (save_trained_pytorch_model,
+                          load_trained_pytorch_model)
 
 from visualization.visualise import (plot_average_model_accuracy, plot_bar)
 
-from utils import (skip_run, save_data, save_trained_pytorch_model)
+from utils import skip_run
 
 # The configuration file
 config_path = Path(__file__).parents[1] / 'src/config.yml'
@@ -78,7 +83,7 @@ with skip_run('skip', 'svm_subject_independent') as check, check():
     clf = svm_tangent_space_classifier(data['train_x'], data['train_y'])
     svm_tangent_space_prediction(clf, data['test_x'], data['test_y'])
 
-with skip_run('run', 'svm_subject_dependent') as check, check():
+with skip_run('skip', 'svm_subject_dependent') as check, check():
     # Get the data
     data = train_test_data(config, leave_out=True)
 
@@ -105,11 +110,17 @@ with skip_run('skip', 'torch_subject_dependent') as check, check():
     model, model_info = train_torch_model(ShallowERPNet, config, dataset)
     path = Path(__file__).parents[1] / config['trained_model_path']
     save_path = str(path)
-    save_trained_pytorch_model(model, model_info, save_path, save_model=False)
+    save_trained_pytorch_model(model, model_info, save_path, save_model=True)
 
-with skip_run('skip', 'plot_average_accuracy') as check, check():
+with skip_run('skip', 'torch_transfer_learning') as check, check():
+    trained_model = load_trained_pytorch_model('experiment_1', 0)
+    data_iterator = subject_specific_data(config, '8815')
+    transfer_torch_model(trained_model, config, data_iterator)
+
+with skip_run('run', 'plot_average_accuracy') as check, check():
     sns.set(font_scale=1.2)
     plot_average_model_accuracy('experiment_0', config)
+    plt.show()
 
 with skip_run('skip', 'plot_bar_graph') as check, check():
     # Get the data

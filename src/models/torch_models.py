@@ -67,3 +67,48 @@ def train_torch_model(network, config, data_iterator, new_weights=False):
                                    np.array(accuracy_log))
 
     return model, model_info
+
+
+def transfer_torch_model(trained_model, config, data_iterator):
+
+    # Switch off the gradient by default to all parameters
+    for parameter in trained_model.parameters():
+        parameter.requires_grad = False
+
+    # Switch on the gradient update only for the last layer
+    for parameter in trained_model.net_2.parameters():
+        parameter.requires_grad = True
+
+    # Perform training after freezing the weigths
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    print('Computation device being used:', device)
+
+    # Loss and optimizer
+    criterion = nn.NLLLoss()
+    optimizer = torch.optim.Adam(trained_model.parameters(),
+                                 lr=config['LEARNING_RATE'])
+
+    # Visual logger
+    visual_logger = visual_log('Task type classification')
+    accuracy_log = []
+
+    for epoch in range(config['NUM_TRANSFER_EPOCHS']):
+        for x_batch, y_batch in data_iterator['training']:
+            # Send the input and labels to gpu
+            x_batch = x_batch.to(device)
+            y_batch = (torch.max(y_batch, dim=1)[1]).to(device)
+
+            # Forward pass
+            out_put = trained_model(x_batch)
+            loss = criterion(out_put, y_batch)
+
+            # Backward and optimize
+            optimizer.zero_grad()  # For batch gradient optimisation
+            loss.backward()
+            optimizer.step()
+
+        accuracy = classification_accuracy(trained_model, data_iterator)
+        accuracy_log.append(accuracy)
+        visual_logger.log(epoch, [accuracy[0], accuracy[1]])
+
+    return None

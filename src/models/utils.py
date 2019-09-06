@@ -1,3 +1,6 @@
+from pathlib import Path
+from datetime import datetime
+
 import torch
 import torch.nn as nn
 from torchnet.logger import VisdomPlotLogger
@@ -125,3 +128,75 @@ def create_model_info(config, loss_func, accuracy):
     }
 
     return model_info
+
+
+def save_trained_pytorch_model(trained_model,
+                               trained_model_info,
+                               save_path,
+                               save_model=True):
+    """Save pytorch model and info.
+
+    Parameters
+    ----------
+    trained_model : pytorch model
+    trained_model_info : dict
+    save_path : str
+
+    """
+
+    if save_model:
+        time_stamp = datetime.now().strftime("%Y_%b_%d_%H_%M_%S")
+        torch.save(trained_model, save_path + '/model_' + time_stamp + '.pth')
+        torch.save(trained_model_info,
+                   save_path + '/model_info_' + time_stamp + '.pth')
+        # Save time also
+        with open(save_path + '/time.txt', "a") as f:
+            f.write(time_stamp + '\n')
+
+    return None
+
+
+def get_model_path(experiment, model_number):
+    """Get all the trained model paths from experiment.
+
+    Parameters
+    ----------
+    experiment : str
+        Which experiment trained models to load.
+
+    Returns
+    -------
+    model path and model info path
+
+    """
+
+    read_path = str(Path(__file__).parents[2]) + '/models/' + experiment
+    with open(read_path + '/time.txt', "r+") as f:
+        trained_model = f.readlines()[model_number]
+    model_time = trained_model.splitlines()[0]  # remove "\n"
+    model_path = str(
+        Path(__file__).parents[2]
+    ) + '/models/' + experiment + '/model_' + model_time + '.pth'
+    model_info_path = str(
+        Path(__file__).parents[2]
+    ) + '/models/' + experiment + '/model_info_' + model_time + '.pth'
+
+    return model_path, model_info_path
+
+
+def load_trained_pytorch_model(experiment, model_number):
+    """Save pytorch model and info.
+
+    Parameters
+    ----------
+    trained_model : pytorch model
+    trained_model_info : dict
+    save_path : str
+
+    """
+
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    model_path, model_info_path = get_model_path(experiment, model_number)
+    trained_model = torch.load(model_path, map_location=device)
+
+    return trained_model
