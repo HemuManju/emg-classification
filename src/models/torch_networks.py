@@ -95,7 +95,7 @@ class ShiftScaleERPNet(nn.Module):
         # The normalisation network
         shift = self.mean_net(x.mean(dim=3))
         x_shifted = x - shift[:, :, :, None]
-        scale = self.std_net(x.std(dim=3))
+        scale = self.std_net(x_shifted.std(dim=3))
         x_scaled = x_shifted * scale[:, :, :, None]
 
         # The convolution network

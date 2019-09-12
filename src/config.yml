@@ -27,13 +27,13 @@ OUTPUT: 3
 NUM_EPOCHS: 50
 NUM_TRANSFER_EPOCHS: 50
 BATCH_SIZE: 64
-LEARNING_RATE: 0.0001
+LEARNING_RATE: 0.001
 TEST_SIZE: 0.15
-DROP_OUT: 0.40
+DROP_OUT: 0.10
 ##---------------------------------------------------------------------##
 # # Experiment 0
 # # All subjects are used for training and testing
-# n_test_subjects: 4
+# test_subjects: []
 # trials: ['HighFine', 'HighGross', 'LowFine', 'LowGross']
 
 # # Path
@@ -46,10 +46,11 @@ DROP_OUT: 0.40
 # statistics_dataframe: 'data/processed/statistics_exp_0_dataset.h5'
 # matlab_dataframe: 'data/external/matlab_dataframe.csv'
 # trained_model_path: 'models/experiment_0'
+# figure_save_path: 'reports/figures/experiment_0'
 ##---------------------------------------------------------------------##
 # # Experiment 1
-# # All subjects are used for training and testing
-# n_test_subjects: 4
+# # 8 subjects were used for training and 4 subjects were used for testing
+# test_subjects: ['8801', '8815', '8819', '8823']
 # trials: ['HighFine', 'HighGross', 'LowFine', 'LowGross']
 
 # # Path
@@ -62,10 +63,11 @@ DROP_OUT: 0.40
 # statistics_dataframe: 'data/processed/statistics_exp_0_dataset.h5'
 # matlab_dataframe: 'data/external/matlab_dataframe.csv'
 # trained_model_path: 'models/experiment_1'
+# figure_save_path: 'reports/figures/experiment_1'
 ##---------------------------------------------------------------------##
 # Experiment 2
-# All subjects are used for training and testing
-n_test_subjects: 4
+# Previously trained model was re-trained on the 4 subjects
+test_subjects: ['8801', '8815', '8819', '8823']
 trials: ['HighFine', 'HighGross', 'LowFine', 'LowGross']
 
 # Path
@@ -77,5 +79,6 @@ clean_emg_data: 'data/processed/clean_emg_exp_0_dataset.h5'
 torch_dataset: 'data/processed/torch_exp_0_dataset.h5'
 statistics_dataframe: 'data/processed/statistics_exp_0_dataset.h5'
 matlab_dataframe: 'data/external/matlab_dataframe.csv'
-trained_model_path: 'models/experiment_2'
-transfered_model_path: 'models/transfered_models/experiment_2'
+trained_model_path: 'models/experiment_1'
+transfered_model_path: 'models/experiment_2'
+figure_save_path: 'reports/figures/experiment_2'

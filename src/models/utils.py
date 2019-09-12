@@ -120,13 +120,21 @@ def create_model_info(config, loss_func, accuracy):
         Description of returned object.
 
     """
-    model_info = {
-        'training_accuracy': accuracy[:, 0],
-        'validation_accuracy': accuracy[:, 1],
-        'testing_accuracy': accuracy[:, 2],
-        'model_parameters': config,
-        'loss function': loss_func
-    }
+    if accuracy.shape[1] == 2:
+        model_info = {
+            'training_accuracy': accuracy[:, 0],
+            'testing_accuracy': accuracy[:, 1],
+            'model_parameters': config,
+            'loss function': loss_func
+        }
+    else:
+        model_info = {
+            'training_accuracy': accuracy[:, 0],
+            'validation_accuracy': accuracy[:, 1],
+            'testing_accuracy': accuracy[:, 2],
+            'model_parameters': config,
+            'loss function': loss_func
+        }
 
     return model_info
 
@@ -148,7 +156,7 @@ def save_trained_pytorch_model(trained_model,
     if save_model:
         if not os.path.isdir(save_path):
             os.mkdir(save_path)
-        time_stamp = datetime.now().strftime("%Y_%b_%d_%H_%M_%S")
+        time_stamp = datetime.now().strftime("%Y_%b_%d_%H_%M")
         torch.save(trained_model, save_path + '/model_' + time_stamp + '.pth')
         torch.save(trained_model_info,
                    save_path + '/model_info_' + time_stamp + '.pth')

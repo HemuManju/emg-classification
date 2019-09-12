@@ -22,7 +22,8 @@ from models.torch_models import (train_torch_model, transfer_torch_model)
 from models.utils import (save_trained_pytorch_model,
                           load_trained_pytorch_model)
 
-from visualization.visualise import (plot_average_model_accuracy, plot_bar)
+from visualization.visualise import (plot_average_model_accuracy, plot_bar,
+                                     plot_accuracy_bar)
 
 from utils import skip_run
 
@@ -119,31 +120,60 @@ with skip_run('skip', 'shallow_transfer_learning') as check, check():
 
 with skip_run('skip', 'shiftscale_subject_independent') as check, check():
 
-    dataset = train_test_iterator(config, leave_out=False)
-    model, model_info = train_torch_model(ShiftScaleERPNet, config, dataset)
-    path = Path(__file__).parents[1] / config['trained_model_path']
-    save_path = str(path)
-    save_trained_pytorch_model(model, model_info, save_path, save_model=False)
+    for _ in range(5):
+        dataset = train_test_iterator(config, [], leave_out=False)
+        model, model_info = train_torch_model(ShiftScaleERPNet, config,
+                                              dataset)
+        path = Path(__file__).parents[1] / config['trained_model_path']
+        save_path = str(path)
+        save_trained_pytorch_model(model,
+                                   model_info,
+                                   save_path,
+                                   save_model=True)
 
 with skip_run('skip', 'shiftscale_subject_dependent') as check, check():
+    test_subjects = config['test_subjects']
+    for i in range(5):
+        dataset = train_test_iterator(config, test_subjects, leave_out=True)
+        model, model_info = train_torch_model(ShiftScaleERPNet, config,
+                                              dataset)
+        path = Path(__file__).parents[1] / config['trained_model_path']
+        save_path = str(path)
+        save_trained_pytorch_model(model,
+                                   model_info,
+                                   save_path,
+                                   save_model=True)
 
-    dataset, test_subjects = train_test_iterator(config, leave_out=True)
-    model, model_info = train_torch_model(ShiftScaleERPNet, config, dataset)
-    path = Path(__file__).parents[1] / config['trained_model_path']
-    save_path = str(path)
-    save_trained_pytorch_model(model, model_info, save_path, save_model=True)
+with skip_run('run', 'shiftscale_transfer_learning') as check, check():
+    test_subjects = config['test_subjects']
 
-with skip_run('skip', 'shiftscale_transfer_learning') as check, check():
-    trained_model = load_trained_pytorch_model('experiment_2', 3)
-    # summary(trained_model, input_size=(1, 8, 200))
-    # print(a)
-    data_iterator = subject_specific_data(config,
-                                          ['8822', '8820', '8819', '8821'])
-    transfer_torch_model(trained_model, config, data_iterator)
+    for i in range(5):
+        trained_model = load_trained_pytorch_model('experiment_1', 1)
+        # summary(trained_model, input_size=(1, 8, 200))
+        data_iterator = subject_specific_data(config, test_subjects)
+        trained_model, model_info = transfer_torch_model(
+            trained_model, config, data_iterator)
+        path = Path(__file__).parents[1] / config['transfered_model_path']
+        save_path = str(path)
+        save_trained_pytorch_model(trained_model,
+                                   model_info,
+                                   save_path,
+                                   save_model=False)
 
 with skip_run('skip', 'plot_average_accuracy') as check, check():
-    sns.set(font_scale=1.2)
     plot_average_model_accuracy('experiment_2', config)
+    plt.show()
+
+with skip_run('skip', 'plot_accuracy_bar') as check, check():
+    colors = ['#BC0019', '#2C69A9', '#40A43A']
+    plot_config = {
+        'save_plot': False,
+        'file_name': 'subject-dependent-accuracy',
+        'color': colors[1],
+        'test_color': colors[2]
+    }
+    plot_accuracy_bar('experiment_1', 1, config, config['subjects'],
+                      plot_config)
     plt.show()
 
 with skip_run('skip', 'plot_bar_graph') as check, check():

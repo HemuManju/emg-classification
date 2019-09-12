@@ -81,6 +81,9 @@ target/
 # exclude figure from source control by default
 /reports/
 
+# exclude figure from source control by default
+/models/
+
 # Mac OS-specific storage files
 .DS_Store
 

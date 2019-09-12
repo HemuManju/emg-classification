@@ -1,5 +1,4 @@
 from pathlib import Path
-import random
 
 import torch
 import numpy as np
@@ -82,7 +81,7 @@ def get_data_split_ids(labels, leave_tags, test_size=0.15):
     return split_ids
 
 
-def train_test_iterator(config, leave_out=False):
+def train_test_iterator(config, test_subjects, leave_out=False):
     """A function to get train, validation, and test data.
 
     Parameters
@@ -110,8 +109,8 @@ def train_test_iterator(config, leave_out=False):
 
     # Get the features and labels
     if leave_out:
-        features, labels, leave_tags, test_subjects = subject_dependent_data(
-            config)
+        features, labels, leave_tags = subject_dependent_data(
+            config, test_subjects)
     else:
         features, labels, leave_tags = subject_independent_data(config)
 
@@ -140,7 +139,7 @@ def train_test_iterator(config, leave_out=False):
                                           shuffle=True,
                                           num_workers=10)
 
-    return data_iterator, test_subjects
+    return data_iterator
 
 
 def subject_independent_data(config):
@@ -194,7 +193,7 @@ def subject_independent_data(config):
     return features, labels, leave_tags
 
 
-def subject_dependent_data(config):
+def subject_dependent_data(config, test_subjects):
     """Get subject dependent data.
 
     Parameters
@@ -214,10 +213,6 @@ def subject_dependent_data(config):
 
     # Parameters
     subjects = config['subjects']
-    test_subjects = random.sample(subjects, config['n_test_subjects'])
-
-    # Print test subjects
-    print(test_subjects)
 
     # Empty array (list)
     x = []
@@ -249,7 +244,7 @@ def subject_dependent_data(config):
     labels = y[rus.sample_indices_, :]
     leave_tags = leave_tags[rus.sample_indices_, :]
 
-    return features, labels, leave_tags, test_subjects
+    return features, labels, leave_tags
 
 
 def subject_specific_data(config, subjects):
@@ -286,8 +281,77 @@ def subject_specific_data(config, subjects):
         x.append(x_temp)
         y.append(y_temp)
 
+    # Convert to array
+    x = np.concatenate(x, axis=0)
+    y = np.concatenate(y, axis=0)
+
+    # Balance the dataset
+    rus = RandomUnderSampler()
+    rus.fit_resample(y, y)
+    features = x[rus.sample_indices_, :, :]
+    labels = y[rus.sample_indices_, :]
+
+    # Create train and test
+    ids = np.arange(labels.shape[0])
+    train_id, test_id, _, _ = train_test_split(ids,
+                                               ids * 0,
+                                               test_size=1 - 2 * TEST_SIZE)
+
+    # Create train and test torch datasets and save them in a dictionary
+    data_iterator = {}
+    train_data = TorchDataset(features, labels, train_id)
+    data_iterator['training'] = DataLoader(train_data,
+                                           batch_size=BATCH_SIZE,
+                                           shuffle=True,
+                                           num_workers=10)
+    # Create test dataiterator
+    test_data = TorchDataset(features, labels, test_id)
+    data_iterator['testing'] = DataLoader(test_data,
+                                          batch_size=BATCH_SIZE,
+                                          shuffle=True,
+                                          num_workers=10)
+
+    return data_iterator
+
+
+def subject_specific_data_with_validation(config, subjects):
+    """Get subject independent data (pooled data).
+
+    Parameters
+    ----------
+    config : yaml
+        The configuration file
+    subject : list
+        The subject ID for whom we need the data
+
+    Returns
+    -------
+    data_iterator
+        A pytorch data iterator
+
+    """
+
+    # Parameters
+    BATCH_SIZE = config['BATCH_SIZE']
+    TEST_SIZE = config['TEST_SIZE']
+
+    path = str(Path(__file__).parents[2] / config['clean_emg_data'])
+    data = dd.io.load(path)
+
+    # Empty array (list)
+    x = []
+    y = []
+
+    for subject in subjects:
+        x_temp = data['subject_' + subject]['features']
+        y_temp = data['subject_' + subject]['labels']
+        x.append(x_temp)
+        y.append(y_temp)
+
+    # For validation
     x_valid = []
     y_valid = []
+
     remaining_subjects = np.setdiff1d(config['subjects'], subjects)
     for subject in remaining_subjects:
         x_temp = data['subject_' + subject]['features']
@@ -327,6 +391,7 @@ def subject_specific_data(config, subjects):
                                              batch_size=BATCH_SIZE,
                                              shuffle=True,
                                              num_workers=10)
+    # Create test dataiterator
     test_data = TorchDataset(features, labels, test_id)
     data_iterator['testing'] = DataLoader(test_data,
                                           batch_size=BATCH_SIZE,
