@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from datetime import datetime
 
@@ -145,6 +146,8 @@ def save_trained_pytorch_model(trained_model,
     """
 
     if save_model:
+        if not os.path.isdir(save_path):
+            os.mkdir(save_path)
         time_stamp = datetime.now().strftime("%Y_%b_%d_%H_%M_%S")
         torch.save(trained_model, save_path + '/model_' + time_stamp + '.pth')
         torch.save(trained_model_info,

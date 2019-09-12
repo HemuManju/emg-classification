@@ -17,7 +17,7 @@ from models.riemann_models import (svm_tangent_space_classifier,
                                    svm_tangent_space_cross_validate,
                                    svm_tangent_space_prediction)
 from models.statistical_models import mixed_effect_model
-from models.torch_networks import ShallowERPNet
+from models.torch_networks import (ShallowERPNet, ShiftScaleERPNet)
 from models.torch_models import (train_torch_model, transfer_torch_model)
 from models.utils import (save_trained_pytorch_model,
                           load_trained_pytorch_model)
@@ -96,7 +96,7 @@ with skip_run('skip', 'svm_crossval_subject_independent') as check, check():
     data = train_test_data(config, leave_out=False)
     svm_tangent_space_cross_validate(data)
 
-with skip_run('skip', 'torch_subject_independent') as check, check():
+with skip_run('skip', 'shallow_subject_independent') as check, check():
 
     dataset = train_test_iterator(config, leave_out=False)
     model, model_info = train_torch_model(ShallowERPNet, config, dataset)
@@ -104,7 +104,7 @@ with skip_run('skip', 'torch_subject_independent') as check, check():
     save_path = str(path)
     save_trained_pytorch_model(model, model_info, save_path, save_model=False)
 
-with skip_run('skip', 'torch_subject_dependent') as check, check():
+with skip_run('skip', 'shallow_subject_dependent') as check, check():
 
     dataset = train_test_iterator(config, leave_out=True)
     model, model_info = train_torch_model(ShallowERPNet, config, dataset)
@@ -112,14 +112,38 @@ with skip_run('skip', 'torch_subject_dependent') as check, check():
     save_path = str(path)
     save_trained_pytorch_model(model, model_info, save_path, save_model=True)
 
-with skip_run('skip', 'torch_transfer_learning') as check, check():
+with skip_run('skip', 'shallow_transfer_learning') as check, check():
     trained_model = load_trained_pytorch_model('experiment_1', 0)
-    data_iterator = subject_specific_data(config, '8815')
+    data_iterator = subject_specific_data(config, ['8823', '8803', '7707'])
     transfer_torch_model(trained_model, config, data_iterator)
 
-with skip_run('run', 'plot_average_accuracy') as check, check():
+with skip_run('skip', 'shiftscale_subject_independent') as check, check():
+
+    dataset = train_test_iterator(config, leave_out=False)
+    model, model_info = train_torch_model(ShiftScaleERPNet, config, dataset)
+    path = Path(__file__).parents[1] / config['trained_model_path']
+    save_path = str(path)
+    save_trained_pytorch_model(model, model_info, save_path, save_model=False)
+
+with skip_run('skip', 'shiftscale_subject_dependent') as check, check():
+
+    dataset, test_subjects = train_test_iterator(config, leave_out=True)
+    model, model_info = train_torch_model(ShiftScaleERPNet, config, dataset)
+    path = Path(__file__).parents[1] / config['trained_model_path']
+    save_path = str(path)
+    save_trained_pytorch_model(model, model_info, save_path, save_model=True)
+
+with skip_run('skip', 'shiftscale_transfer_learning') as check, check():
+    trained_model = load_trained_pytorch_model('experiment_2', 3)
+    # summary(trained_model, input_size=(1, 8, 200))
+    # print(a)
+    data_iterator = subject_specific_data(config,
+                                          ['8822', '8820', '8819', '8821'])
+    transfer_torch_model(trained_model, config, data_iterator)
+
+with skip_run('skip', 'plot_average_accuracy') as check, check():
     sns.set(font_scale=1.2)
-    plot_average_model_accuracy('experiment_0', config)
+    plot_average_model_accuracy('experiment_2', config)
     plt.show()
 
 with skip_run('skip', 'plot_bar_graph') as check, check():

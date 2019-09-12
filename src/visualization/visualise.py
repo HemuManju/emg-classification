@@ -26,7 +26,7 @@ def plot_average_model_accuracy(experiment, config, variation=False):
     colors = ['#BC0019', '#2C69A9', '#40A43A']
     for i, key in enumerate(keys):
         accuracy = np.empty((0, config['NUM_EPOCHS']))
-        for j in range(5):
+        for j in range(4):
             model_path, model_info_path = get_model_path(experiment, j)
             model_info = torch.load(model_info_path, map_location=device)
             accuracy = np.vstack((model_info[key], accuracy))

@@ -69,7 +69,7 @@ def train_torch_model(network, config, data_iterator, new_weights=False):
     return model, model_info
 
 
-def transfer_torch_model(trained_model, config, data_iterator):
+def transfer_torch_model(trained_model, config, data_iterator, subject):
 
     # Switch off the gradient by default to all parameters
     for parameter in trained_model.parameters():
@@ -79,9 +79,24 @@ def transfer_torch_model(trained_model, config, data_iterator):
     for parameter in trained_model.net_2.parameters():
         parameter.requires_grad = True
 
+    # summary(trained_model, input_size=(8, 200))
+
+    # # Train only the first layers used for noramlisation
+    # for parameter in trained_model.mean_net.parameters():
+    #     parameter.requires_grad = True
+
+    # for parameter in trained_model.std_net.parameters():
+    #     parameter.requires_grad = True
+
     # Perform training after freezing the weigths
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print('Computation device being used:', device)
+
+    # # Replace the net with new weights
+    # trained_model.mean_net = nn.Linear(config['n_electrodes'],
+    #                                    config['n_electrodes']).to(device)
+    # trained_model.std_net = nn.Linear(config['n_electrodes'],
+    #                                   config['n_electrodes']).to(device)
 
     # Loss and optimizer
     criterion = nn.NLLLoss()
@@ -89,7 +104,7 @@ def transfer_torch_model(trained_model, config, data_iterator):
                                  lr=config['LEARNING_RATE'])
 
     # Visual logger
-    visual_logger = visual_log('Task type classification')
+    visual_logger = visual_log('Task type classification' + subject)
     accuracy_log = []
 
     for epoch in range(config['NUM_TRANSFER_EPOCHS']):
@@ -109,6 +124,10 @@ def transfer_torch_model(trained_model, config, data_iterator):
 
         accuracy = classification_accuracy(trained_model, data_iterator)
         accuracy_log.append(accuracy)
-        visual_logger.log(epoch, [accuracy[0], accuracy[1]])
+        visual_logger.log(epoch, [accuracy[0], accuracy[1], accuracy[2]])
 
-    return None
+    # Add loss function info to parameter.
+    model_info = create_model_info(config, str(criterion),
+                                   np.array(accuracy_log))
+
+    return trained_model, model_info
