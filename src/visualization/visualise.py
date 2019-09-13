@@ -9,7 +9,7 @@ import seaborn as sns
 from datasets.torch_datasets import subject_specific_data
 
 from .utils import (get_model_path, figure_asthetics, annotate_significance,
-                    plot_settings, draw_horizontal_line)
+                    plot_settings)
 
 
 def plot_average_model_accuracy(experiment, config, variation=False):
@@ -134,7 +134,7 @@ def plot_accuracy_bar(experiment, model_number, config, subjects, plot_config):
            mean,
            yerr=std,
            color=plot_config['color'],
-           capsize=3,
+           capsize=5,
            label='Trained')
 
     # replace color of test subjects
@@ -151,20 +151,16 @@ def plot_accuracy_bar(experiment, model_number, config, subjects, plot_config):
 
     # Draw mean values
     print(np.mean(mean))
-    # draw_horizontal_line(ax, np.mean(mean), color='k', linestyle='-')
-    draw_horizontal_line(ax,
-                         0.3333,
-                         color='#B53941',
-                         linestyle='-',
-                         name='Chance')
 
-    figure_asthetics(ax, subplot=False)
+    # figure_asthetics(ax, subplot=False)
     ax.set_xticks(range(0, 12))
     ax.set_xticklabels(range(1, 13))
     ax.set_ylim((0, 1.0))
     ax.set_xlabel('Subject ID')
     ax.set_ylabel('Classification accuracy (%)')
-    plt.legend(ncol=3, loc="upper right")
+    ax.set_axisbelow(True)
+    ax.grid()
+    # ax.legend(ncol=2, loc="upper right")
     plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
 
     if plot_config['save_plot']:
@@ -180,7 +176,68 @@ def plot_accuracy_bar(experiment, model_number, config, subjects, plot_config):
     return None
 
 
-def plot_bar(config, dataframe, independent, dependent):
+def plot_accuracy_bar_transfer(experiment, model_number, config, subjects,
+                               plot_config, ax):
+
+    # Convert to list object if only str is given
+    if not isinstance(subjects, list):
+        subjects = [subjects]
+
+    # Make an empty dataframe and empty numpy array
+    # df = pd.DataFrame(index=range(5), columns=subjects)
+    data = np.empty((5, len(subjects)))
+
+    # Load the model
+    model_path, model_info_path = get_model_path(experiment, model_number)
+
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    model = torch.load(model_path, map_location=device)
+
+    for i, subject in enumerate(subjects):
+        for j in range(5):
+            data_iterator = subject_specific_data(config, [subject])
+            accuracy = calculate_accuracy(model, data_iterator, 'testing')
+            # df.loc[j, subject] = accuracy
+            data[j, i] = accuracy
+    # Plot the bar graph
+    mean = np.mean(data, axis=0)
+    std = np.std(data, axis=0)
+
+    positions = [config['subjects'].index(item) + 1 for item in subjects]
+    ax.bar(range(len(subjects)),
+           mean,
+           yerr=std,
+           color=plot_config['color'],
+           capsize=8)
+
+    # Draw mean values
+    print(np.mean(mean))
+
+    ax.set_ylim((0, 1.0))
+    # figure_asthetics(ax, subplot=False)
+    ax.set_xticks(range(len(subjects)))
+    ax.set_xticklabels(positions)
+    ax.set_xlabel('Subject ID')
+    ax.set_ylabel('Classification accuracy (%)')
+    # ax.legend(ncol=1, loc="upper right")
+    ax.set_axisbelow(True)
+    ax.grid()
+    plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
+
+    if plot_config['save_plot']:
+        name = plot_config['file_name'].lower().replace(" ", "-")
+        name = name.replace("/", " ")
+        path = str(Path(__file__).parents[2] /
+                   config['figure_save_path']) + '/' + name + '.pdf'
+        # If the folder does not exist create it
+        if not os.path.isdir(config['figure_save_path']):
+            os.mkdir(config['figure_save_path'])
+        plt.savefig(path, bbox_inches='tight')
+
+    return None
+
+
+def plot_bar(config, dataframe, independent, dependent, ax):
     """Bar plot of the dataframe.
 
     Parameters
@@ -200,35 +257,38 @@ def plot_bar(config, dataframe, independent, dependent):
     None
 
     """
-
-    # sns.set(font_scale=1.4)
-
-    ax = sns.barplot(x=dependent,
-                     y=independent,
-                     hue='damping',
-                     data=dataframe,
-                     capsize=.1)
+    plot_settings()
+    sns.set(font_scale=1.2)
+    sns.barplot(x=dependent,
+                y=independent,
+                hue='damping',
+                data=dataframe,
+                capsize=.1,
+                ax=ax)
+    # figure_asthetics(ax, subplot=False)
 
     # Add significance
     if independent == 'velocity':
         y = 0.14
-        annotate_significance(0.8, 1.20, y, 0.005)
+        annotate_significance(ax, 0.8, 1.20, y, 0.005)
         ax.set_ylim([0, y + y * 0.1])
 
     else:
         # Within Fine motion
         y = 5
-        annotate_significance(-0.2, 0.2, y, 0.005)
+        annotate_significance(ax, -0.2, 0.2, y, 0.005)
         ax.set_ylim([0, y + y * 0.1])
 
         # Within Gross motion
         y = 16
-        annotate_significance(0.8, 1.20, y, 0.005)
+        annotate_significance(ax, 0.8, 1.20, y, 0.005)
         ax.set_ylim([0, y + y * 0.1])
 
     # Other figure information
     ax.set_ylabel(independent.replace('_', ' '))
     ax.set_xlabel('task type information')
+    ax.set_axisbelow(True)
+    ax.grid()
 
     return None
 

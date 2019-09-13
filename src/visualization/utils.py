@@ -56,7 +56,8 @@ def figure_asthetics(ax, subplot):
     # Increase the x and y ticks
     if not subplot:
         xtickslocs = ax.get_xticks().tolist()
-        ax.set_xticks(xtickslocs[1:-1])
+        ax.set_xticks(xtickslocs[1:])
+        ax.set_xticklabels(xtickslocs[1:-1])
         ytickslocs = ax.get_yticks().tolist()
         ax.set_yticks(ytickslocs)
 
@@ -84,13 +85,13 @@ def plot_settings():
 
     """
 
-    # plt.rcParams.update({'font.family'}: "Arial")
-    plt.rcParams.update({'font.size': 18})
+    plt.rcParams.update({'font.family': "Arial"})
+    plt.rcParams.update({'font.size': 16})
 
     return None
 
 
-def annotate_significance(x1, x2, y, p):
+def annotate_significance(ax, x1, x2, y, p):
     """Add significance annotations over a plot.
 
     Parameters
@@ -114,13 +115,13 @@ def annotate_significance(x1, x2, y, p):
     elif p < 0.01:
         star = "**"
     if star:
-        plt.plot([x1, x1, x2, x2], [y, y + h, y + h, y], lw=1.5, c='k')
-        plt.text((x1 + x2) * .5,
-                 y,
-                 star,
-                 ha='center',
-                 va='bottom',
-                 color='k',
-                 size=20)
+        ax.plot([x1, x1, x2, x2], [y, y + h, y + h, y], lw=1.5, c='k')
+        ax.text((x1 + x2) * .5,
+                y,
+                star,
+                ha='center',
+                va='bottom',
+                color='k',
+                size=20)
 
     return None

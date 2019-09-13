@@ -1,7 +1,6 @@
 import yaml
 from pathlib import Path
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 from data.clean_data import clean_epoch_data
 from data.create_data import (create_emg_data, create_emg_epoch,
@@ -23,7 +22,9 @@ from models.utils import (save_trained_pytorch_model,
                           load_trained_pytorch_model)
 
 from visualization.visualise import (plot_average_model_accuracy, plot_bar,
-                                     plot_accuracy_bar)
+                                     plot_accuracy_bar,
+                                     plot_accuracy_bar_transfer)
+from visualization.utils import plot_settings
 
 from utils import skip_run
 
@@ -144,7 +145,7 @@ with skip_run('skip', 'shiftscale_subject_dependent') as check, check():
                                    save_path,
                                    save_model=True)
 
-with skip_run('run', 'shiftscale_transfer_learning') as check, check():
+with skip_run('skip', 'shiftscale_transfer_learning') as check, check():
     test_subjects = config['test_subjects']
 
     for i in range(5):
@@ -164,11 +165,22 @@ with skip_run('skip', 'plot_average_accuracy') as check, check():
     plot_average_model_accuracy('experiment_2', config)
     plt.show()
 
-with skip_run('skip', 'plot_accuracy_bar') as check, check():
-    colors = ['#BC0019', '#2C69A9', '#40A43A']
+with skip_run('skip', 'plot_accuracy_bar_independent') as check, check():
+    colors = ['#476093', '#476093', '#BE7651']
     plot_config = {
-        'save_plot': False,
-        'file_name': 'subject-dependent-accuracy',
+        'save_plot': True,
+        'file_name': 'subject_independent_accuracy',
+        'color': colors[1],
+        'test_color': colors[2]
+    }
+    plot_accuracy_bar('experiment_0', 1, config, config['subjects'],
+                      plot_config)
+    plt.show()
+
+    colors = ['#476093', '#476093', '#BE7651']
+    plot_config = {
+        'save_plot': True,
+        'file_name': 'subject_dependent_accuracy',
         'color': colors[1],
         'test_color': colors[2]
     }
@@ -176,24 +188,45 @@ with skip_run('skip', 'plot_accuracy_bar') as check, check():
                       plot_config)
     plt.show()
 
+with skip_run('skip', 'plot_accuracy_bar_transfer') as check, check():
+    colors = ['#476093', '#476093', '#BE7651']
+    plot_config = {
+        'save_plot': True,
+        'file_name': 'subject-dependent-accuracy',
+        'color': colors[2],
+        'label': 'Before transfer learning'
+    }
+    plot_settings()
+    fig, ax = plt.subplots(1, 2, figsize=(8, 5), sharey=True)
+    plot_accuracy_bar_transfer('experiment_1', 1, config,
+                               config['test_subjects'], plot_config, ax[0])
+    plot_config = {
+        'save_plot': True,
+        'file_name': 'transfer_learning_accuracy',
+        'color': colors[1],
+        'label': 'After transfer learning'
+    }
+    plot_accuracy_bar_transfer('experiment_2', 0, config,
+                               config['test_subjects'], plot_config, ax[1])
+    plt.show()
+
 with skip_run('skip', 'plot_bar_graph') as check, check():
     # Get the data
     dataframe = matlab_dataframe(config)
 
-    plt.subplots(figsize=(7, 4))
-    sns.set(font_scale=1.2)
+    plot_settings()
+    fig, ax = plt.subplots(1, 2, figsize=(8, 5))
+    # plt.subplots(figsize=(7, 4))
 
     # Force
-    plt.subplot(1, 2, 1)
     dependent = 'task'
     independent = 'total_force'
-    plot_bar(config, dataframe, independent, dependent)
+    plot_bar(config, dataframe, independent, dependent, ax[0])
 
     # Velocity
-    plt.subplot(1, 2, 2)
     dependent = 'task'
     independent = 'velocity'
-    plot_bar(config, dataframe, independent, dependent)
+    plot_bar(config, dataframe, independent, dependent, ax[1])
 
     plt.tight_layout()
     plt.show()
