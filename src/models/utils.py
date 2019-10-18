@@ -8,6 +8,62 @@ from torchnet.logger import VisdomPlotLogger
 from torch.nn.init import xavier_normal_
 
 
+def cov(m, rowvar=False):
+    '''Estimate a covariance matrix given data.
+
+    Covariance indicates the level to which two variables vary together.
+    If we examine N-dimensional samples, `X = [x_1, x_2, ... x_N]^T`,
+    then the covariance matrix element `C_{ij}` is the covariance of
+    `x_i` and `x_j`. The element `C_{ii}` is the variance of `x_i`.
+
+    Parameters
+    ----------
+    m : array
+        A 1-D or 2-D array containing multiple variables and observations.
+        Each row of `m` represents a variable, and each column a single
+        observation of all those variables.
+    rowvar : bool
+        If `rowvar` is True, then each row represents a
+        variable, with observations in the columns. Otherwise, the
+        relationship is transposed: each column represents a variable,
+        while the rows contain observations.
+
+    Returns:
+        The covariance matrix of the variables.
+    '''
+    if m.dim() > 2:
+        raise ValueError('m has more than 2 dimensions')
+    if m.dim() < 2:
+        m = m.view(1, -1)
+    if not rowvar and m.size(0) != 1:
+        m = m.t()
+    # m = m.type(torch.double)  # uncomment this line if desired
+    fact = 1.0 / (m.size(1) - 1)
+    m -= torch.mean(m, dim=1, keepdim=True)
+    mt = m.t()  # if complex: mt = m.t().conj()
+    return fact * m.matmul(mt)[(None, ) * 2]  # expand it to shape [N,C,H,W]
+
+
+def batch_cov(tensor):
+    """Calculates the covariance of each member of the batch.
+
+    Parameters
+    ----------
+    tensor : tensor
+        A torch tensor of shape [N,C,H,W].
+
+    Returns
+    -------
+    tensor
+        A tensor of shape [N,C,H,W] with covariance of each member.
+    """
+
+    output = []
+    for i in range(tensor.size(0)):
+        output.append(cov(tensor[i].squeeze(dim=0)))
+    return torch.cat(output, dim=0)
+
+
 def weights_init(model):
     """Xavier normal weight initialization for the given model.
 
@@ -100,7 +156,6 @@ def visual_log(title):
                   xlabel='Epochs',
                   ylabel='Accuracy',
                   title=title))
-
     return visual_logger
 
 

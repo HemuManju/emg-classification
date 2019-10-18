@@ -3,6 +3,8 @@ from pathlib import Path
 import torch
 import numpy as np
 import deepdish as dd
+from pyriemann.estimation import Covariances
+from pyriemann.tangentspace import TangentSpace
 
 from imblearn.under_sampling import RandomUnderSampler
 from sklearn.model_selection import train_test_split
@@ -26,12 +28,12 @@ class TorchDataset(Dataset):
     def __init__(self, features, labels, split_ids):
         super(TorchDataset, self).__init__()
         self.split_ids = split_ids
-        self.features = features[self.split_ids, :, :]
+        self.features = features[self.split_ids]
         self.labels = labels[self.split_ids, :]
 
     def __getitem__(self, index):
         # Read only specific data and convert to torch tensors
-        x = torch.from_numpy(self.features[index, :, :]).type(torch.float32)
+        x = torch.from_numpy(self.features[index]).type(torch.float32)
         y = torch.from_numpy(self.labels[index, :]).type(torch.float32)
         return x, y
 
@@ -81,7 +83,7 @@ def get_data_split_ids(labels, leave_tags, test_size=0.15):
     return split_ids
 
 
-def train_test_iterator(config, test_subjects, leave_out=False):
+def train_test_iterator(config, test_subjects, leave_out=False, cov=False):
     """A function to get train, validation, and test data.
 
     Parameters
@@ -109,10 +111,17 @@ def train_test_iterator(config, test_subjects, leave_out=False):
 
     # Get the features and labels
     if leave_out:
-        features, labels, leave_tags = subject_dependent_data(
-            config, test_subjects)
+        if cov:
+            features, labels, leave_tags = subject_dependent_cov_data(
+                config, test_subjects)
+        else:
+            features, labels, leave_tags = subject_dependent_data(
+                config, test_subjects)
     else:
-        features, labels, leave_tags = subject_independent_data(config)
+        if cov:
+            features, labels, leave_tags = subject_independent_cov_data(config)
+        else:
+            features, labels, leave_tags = subject_independent_data(config)
 
     # Get training, validation, and testing split_ids
     split_ids = get_data_split_ids(labels, leave_tags, test_size=TEST_SIZE)
@@ -193,7 +202,114 @@ def subject_independent_data(config):
     return features, labels, leave_tags
 
 
+def subject_independent_cov_data(config):
+    """Get subject independent covariance data (pooled data).
+
+    Parameters
+    ----------
+    config : yaml
+        The configuration file
+
+    Returns
+    -------
+    features, labels, leave_leave_tags
+        2 arrays features and labels.
+        A tag determines whether the data point is used in training.
+
+    """
+
+    path = str(Path(__file__).parents[2] / config['clean_emg_data'])
+    data = dd.io.load(path)
+
+    # Parameters
+    subjects = config['subjects']
+
+    # Empty array (list)
+    x = []
+    y = []
+    leave_tags = np.empty((0, 1))
+
+    for subject in subjects:
+        cov_temp = Covariances().transform(data['subject_' +
+                                                subject]['features'])
+        x_temp = TangentSpace(metric='riemann').transform(cov_temp)
+        y_temp = data['subject_' + subject]['labels']
+        x.append(x_temp)
+        y.append(y_temp)
+        leave_tags = np.concatenate((leave_tags, y_temp[:, 0:1] * 0 + 1),
+                                    axis=0)
+
+    # Convert to array
+    x = np.concatenate(x, axis=0)
+    y = np.concatenate(y, axis=0)
+
+    # Balance the dataset
+    rus = RandomUnderSampler()
+    rus.fit_resample(y, y)
+
+    # Store them in dictionary
+    features = x[rus.sample_indices_, :]
+    labels = y[rus.sample_indices_, :]
+    leave_tags = leave_tags[rus.sample_indices_, :]
+
+    return features, labels, leave_tags
+
+
 def subject_dependent_data(config, test_subjects):
+    """Get subject dependent data.
+
+    Parameters
+    ----------
+    config : yaml
+        The configuration file
+
+    Returns
+    -------
+    features, labels
+        2 arrays features and labels
+
+    """
+
+    path = str(Path(__file__).parents[2] / config['clean_emg_data'])
+    data = dd.io.load(path)
+
+    # Parameters
+    subjects = config['subjects']
+
+    # Empty array (list)
+    x = []
+    y = []
+    leave_tags = np.empty((0, 1))
+
+    for subject in subjects:
+        x_temp = data['subject_' + subject]['features']
+        y_temp = data['subject_' + subject]['labels']
+        x.append(x_temp)
+        y.append(y_temp)
+        if subject in test_subjects:
+            leave_tags = np.concatenate((leave_tags, y_temp[:, 0:1] * 0),
+                                        axis=0)
+        else:
+            leave_tags = np.concatenate((leave_tags, y_temp[:, 0:1] * 0 + 1),
+                                        axis=0)
+
+    # Convert to array
+    x = np.concatenate(x, axis=0)
+    y = np.concatenate(y, axis=0)
+
+    # Balance the dataset
+    rus = RandomUnderSampler()
+    rus.fit_resample(y, y)
+
+    # Store them in dictionary
+    features = x[rus.sample_indices_, :, :]
+    labels = y[rus.sample_indices_, :]
+    leave_tags = leave_tags[rus.sample_indices_, :]
+
+    return features, labels, leave_tags
+
+
+def subject_dependent_cov_data(config, test_subjects):
     """Get subject dependent data.
 
     Parameters

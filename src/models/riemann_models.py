@@ -1,13 +1,14 @@
 import numpy as np
 
 from pyriemann.embedding import Embedding
-from pyriemann.estimation import XdawnCovariances
+from pyriemann.estimation import XdawnCovariances, Covariances
 from pyriemann.tangentspace import TangentSpace
 
 from sklearn.metrics import accuracy_score
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, KFold
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
 
 
 def svm_tangent_space_classifier(features, labels):
@@ -28,8 +29,8 @@ def svm_tangent_space_classifier(features, labels):
     """
     # Construct sklearn pipeline
     n_components = 3  # pick some components
-    clf = Pipeline([('xdawn_transform',
-                     XdawnCovariances(n_components, estimator='lwf')),
+    clf = Pipeline([('cov_transform', Covariances(n_components,
+                                                  estimator='lwf')),
                     ('tangent_space', TangentSpace(metric='riemann')),
                     ('svm_classify', SVC(kernel='rbf', gamma='auto'))])
     # cross validation
@@ -86,13 +87,47 @@ def svm_tangent_space_cross_validate(data):
 
     # Construct sklearn pipeline
     n_components = 3  # pick some components
-    clf = Pipeline([('xdawn_transform',
-                     XdawnCovariances(n_components, estimator='lwf')),
+    clf = Pipeline([('cov_transform', Covariances(n_components,
+                                                  estimator='lwf')),
                     ('tangent_space', TangentSpace(metric='riemann')),
                     ('svm_classify', SVC(kernel='rbf', gamma='auto'))])
     # cross validation
-    scores = cross_val_score(clf, x, y, cv=5)
+    scores = cross_val_score(clf, x, y, cv=KFold(5, shuffle=True))
     print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+    print('\n')
+
+    return scores
+
+
+def forest_tangent_space_cross_validate(data):
+    """A cross validated tangent space classifier with svm.
+
+    Parameters
+    ----------
+    data : dict
+        A dictionary containing training and testing data
+
+    Returns
+    -------
+    cross validated scores
+        A list of cross validated scores.
+
+    """
+
+    # Combine the dataset
+    x = np.concatenate((data['train_x'], data['test_x']), axis=0)
+    y = np.concatenate((data['train_y'], data['test_y']), axis=0)
+
+    # Construct sklearn pipeline
+    clf = Pipeline([('cov_transform', Covariances(estimator='lwf')),
+                    ('tangent_space', TangentSpace(metric='riemann')),
+                    ('random_forest_classify',
+                     RandomForestClassifier(n_estimators=20,
+                                            max_depth=15,
+                                            random_state=43))])
+    # cross validation
+    scores = cross_val_score(clf, x, y, cv=KFold(5, shuffle=True))
+    print("Accuracy: %0.4f (+/- %0.4f)" % (scores.mean(), scores.std() * 2))
     print('\n')
 
     return scores

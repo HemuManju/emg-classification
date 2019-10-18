@@ -14,9 +14,11 @@ from datasets.statistics_dataset import matlab_dataframe
 
 from models.riemann_models import (svm_tangent_space_classifier,
                                    svm_tangent_space_cross_validate,
-                                   svm_tangent_space_prediction)
+                                   svm_tangent_space_prediction,
+                                   forest_tangent_space_cross_validate)
 from models.statistical_models import mixed_effect_model
-from models.torch_networks import (ShallowERPNet, ShiftScaleERPNet)
+from models.torch_networks import (ShallowEMGNet, ShiftScaleEMGNet,
+                                   ShiftScaleCovEMGNet)
 from models.torch_models import (train_torch_model, transfer_torch_model)
 from models.utils import (save_trained_pytorch_model,
                           load_trained_pytorch_model)
@@ -98,10 +100,15 @@ with skip_run('skip', 'svm_crossval_subject_independent') as check, check():
     data = train_test_data(config, leave_out=False)
     svm_tangent_space_cross_validate(data)
 
+with skip_run('skip', 'forest_crossval_subject_independent') as check, check():
+    # Get the data
+    data = train_test_data(config, leave_out=False)
+    forest_tangent_space_cross_validate(data)
+
 with skip_run('skip', 'shallow_subject_independent') as check, check():
 
     dataset = train_test_iterator(config, leave_out=False)
-    model, model_info = train_torch_model(ShallowERPNet, config, dataset)
+    model, model_info = train_torch_model(ShallowEMGNet, config, dataset)
     path = Path(__file__).parents[1] / config['trained_model_path']
     save_path = str(path)
     save_trained_pytorch_model(model, model_info, save_path, save_model=False)
@@ -109,7 +116,7 @@ with skip_run('skip', 'shallow_subject_independent') as check, check():
 with skip_run('skip', 'shallow_subject_dependent') as check, check():
 
     dataset = train_test_iterator(config, leave_out=True)
-    model, model_info = train_torch_model(ShallowERPNet, config, dataset)
+    model, model_info = train_torch_model(ShallowEMGNet, config, dataset)
     path = Path(__file__).parents[1] / config['trained_model_path']
     save_path = str(path)
     save_trained_pytorch_model(model, model_info, save_path, save_model=True)
@@ -123,20 +130,33 @@ with skip_run('skip', 'shiftscale_subject_independent') as check, check():
 
     for _ in range(5):
         dataset = train_test_iterator(config, [], leave_out=False)
-        model, model_info = train_torch_model(ShiftScaleERPNet, config,
+        model, model_info = train_torch_model(ShiftScaleEMGNet, config,
                                               dataset)
         path = Path(__file__).parents[1] / config['trained_model_path']
         save_path = str(path)
         save_trained_pytorch_model(model,
                                    model_info,
                                    save_path,
-                                   save_model=True)
+                                   save_model=False)
+
+with skip_run('run', 'shiftscale_cov_subject_independent') as check, check():
+
+    for _ in range(5):
+        dataset = train_test_iterator(config, [], leave_out=False, cov=True)
+        model, model_info = train_torch_model(ShiftScaleCovEMGNet, config,
+                                              dataset)
+        path = Path(__file__).parents[1] / config['trained_model_path']
+        save_path = str(path)
+        save_trained_pytorch_model(model,
+                                   model_info,
+                                   save_path,
+                                   save_model=False)
 
 with skip_run('skip', 'shiftscale_subject_dependent') as check, check():
     test_subjects = config['test_subjects']
     for i in range(5):
         dataset = train_test_iterator(config, test_subjects, leave_out=True)
-        model, model_info = train_torch_model(ShiftScaleERPNet, config,
+        model, model_info = train_torch_model(ShiftScaleEMGNet, config,
                                               dataset)
         path = Path(__file__).parents[1] / config['trained_model_path']
         save_path = str(path)

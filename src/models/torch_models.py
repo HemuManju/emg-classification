@@ -60,7 +60,8 @@ def train_torch_model(network, config, data_iterator, new_weights=False):
 
         accuracy = classification_accuracy(model, data_iterator)
         accuracy_log.append(accuracy)
-        visual_logger.log(epoch, [accuracy[0], accuracy[1], accuracy[2]])
+        if visual_logger:
+            visual_logger.log(epoch, [accuracy[0], accuracy[1], accuracy[2]])
 
     # Add loss function info to parameter.
     model_info = create_model_info(config, str(criterion),
@@ -69,7 +70,7 @@ def train_torch_model(network, config, data_iterator, new_weights=False):
     return model, model_info
 
 
-def transfer_torch_model(trained_model, config, data_iterator):
+def transfer_torch_model(trained_model, config, data_iterator, plot=False):
 
     # Perform training after freezing the weigths
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -78,10 +79,6 @@ def transfer_torch_model(trained_model, config, data_iterator):
     # Switch off the gradient by default to all parameters
     for parameter in trained_model.parameters():
         parameter.requires_grad = False
-
-    # # Switch on the gradient update only for the last layer
-    # for parameter in trained_model.net_2.parameters():
-    #     parameter.requires_grad = True
 
     # summary(trained_model, input_size=(8, 200))
 
@@ -104,7 +101,7 @@ def transfer_torch_model(trained_model, config, data_iterator):
                                  lr=config['LEARNING_RATE'])
 
     # Visual logger
-    visual_logger = visual_log('Task type classification')
+    visual_logger = visual_log('Motor control difficulty classification')
     accuracy_log = []
 
     for epoch in range(config['NUM_TRANSFER_EPOCHS']):
@@ -124,7 +121,7 @@ def transfer_torch_model(trained_model, config, data_iterator):
 
         accuracy = classification_accuracy(trained_model, data_iterator)
         accuracy_log.append(accuracy)
-        visual_logger.log(epoch, [accuracy[0], 0, accuracy[1]])
+        visual_logger.log(epoch, [accuracy[0], accuracy[1], accuracy[2]])
 
     # Add loss function info to parameter.
     model_info = create_model_info(config, str(criterion),

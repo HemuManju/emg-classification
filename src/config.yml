@@ -24,33 +24,16 @@ subjects:
 ##---------------------------------------------------------------------##
 # Neural network parameters
 OUTPUT: 3
-NUM_EPOCHS: 50
+NUM_EPOCHS: 150
 NUM_TRANSFER_EPOCHS: 50
 BATCH_SIZE: 64
 LEARNING_RATE: 0.001
 TEST_SIZE: 0.15
 DROP_OUT: 0.10
 ##---------------------------------------------------------------------##
-# Experiment 0
-# All subjects are used for training and testing
-test_subjects: []
-trials: ['HighFine', 'HighGross', 'LowFine', 'LowGross']
-
-# Path
-raw_emg_path: 'data/raw/emg_data/'
-force_data_path: 'data/raw/force_data/'
-raw_emg_data: 'data/interim/raw_emg_exp_0_dataset.h5'
-epoch_emg_data: 'data/processed/epoch_emg_exp_0_dataset.h5'
-clean_emg_data: 'data/processed/clean_emg_exp_0_dataset.h5'
-torch_dataset: 'data/processed/torch_exp_0_dataset.h5'
-statistics_dataframe: 'data/processed/statistics_exp_0_dataset.h5'
-matlab_dataframe: 'data/external/matlab_dataframe.csv'
-trained_model_path: 'models/experiment_0'
-figure_save_path: 'reports/figures/experiment_0'
-##---------------------------------------------------------------------##
-# # Experiment 1
-# # 8 subjects were used for training and 4 subjects were used for testing
-# test_subjects: ['8801', '8815', '8819', '8823']
+# # Experiment 0
+# # All subjects are used for training and testing
+# test_subjects: []
 # trials: ['HighFine', 'HighGross', 'LowFine', 'LowGross']
 
 # # Path
@@ -62,8 +45,25 @@ figure_save_path: 'reports/figures/experiment_0'
 # torch_dataset: 'data/processed/torch_exp_0_dataset.h5'
 # statistics_dataframe: 'data/processed/statistics_exp_0_dataset.h5'
 # matlab_dataframe: 'data/external/matlab_dataframe.csv'
-# trained_model_path: 'models/experiment_1'
-# figure_save_path: 'reports/figures/experiment_1'
+# trained_model_path: 'models/experiment_0'
+# figure_save_path: 'reports/figures/experiment_0'
+##---------------------------------------------------------------------##
+# Experiment 1
+# 8 subjects were used for training and 4 subjects were used for testing
+test_subjects: ['8801', '8815', '8819', '8823']
+trials: ['HighFine', 'HighGross', 'LowFine', 'LowGross']
+
+# Path
+raw_emg_path: 'data/raw/emg_data/'
+force_data_path: 'data/raw/force_data/'
+raw_emg_data: 'data/interim/raw_emg_exp_0_dataset.h5'
+epoch_emg_data: 'data/processed/epoch_emg_exp_0_dataset.h5'
+clean_emg_data: 'data/processed/clean_emg_exp_0_dataset.h5'
+torch_dataset: 'data/processed/torch_exp_0_dataset.h5'
+statistics_dataframe: 'data/processed/statistics_exp_0_dataset.h5'
+matlab_dataframe: 'data/external/matlab_dataframe.csv'
+trained_model_path: 'models/experiment_1'
+figure_save_path: 'reports/figures/experiment_1'
 ##---------------------------------------------------------------------##
 # # Experiment 2
 # # Previously trained model was re-trained on the 4 subjects
