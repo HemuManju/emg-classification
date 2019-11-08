@@ -35,18 +35,21 @@ DROP_OUT: 0.10
 # All subjects are used for training and testing
 test_subjects: []
 trials: ['HighFine', 'HighGross', 'LowFine', 'LowGross']
-sum_imf: False
+sum_imf: True
 n_imf: 3
 
 # Path
 raw_emg_path: 'data/raw/emg_data/'
 force_data_path: 'data/raw/force_data/'
 raw_emg_data: 'data/interim/raw_emg_exp_0_dataset.h5'
+raw_emd_feature_data: 'data/interim/emd_features_emg_exp_0_dataset.h5'
+
 epoch_emg_data: 'data/processed/epoch_emg_exp_0_dataset.h5'
 clean_emg_data: 'data/processed/clean_emg_exp_0_dataset.h5'
+clean_emd_data: 'data/processed/clean_emd_exp_0_dataset.h5'
 epoch_eeg_data: 'data/processed/epoch_eeg_exp_0_dataset.h5'
-emd_feature_data: 'data/processed/emd_features_emg_exp_0_dataset.h5'
 clean_eeg_data: 'data/processed/clean_eeg_exp_0_dataset.h5'
+
 torch_dataset: 'data/processed/torch_exp_0_dataset.h5'
 statistics_dataframe: 'data/processed/statistics_exp_0_dataset.h5'
 matlab_dataframe: 'data/external/matlab_dataframe.csv'

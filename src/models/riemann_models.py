@@ -33,7 +33,7 @@ def svm_tangent_space_classifier(features, labels):
                     ('tangent_space', TangentSpace(metric='riemann')),
                     ('svm_classify', SVC(kernel='rbf', gamma='auto'))])
     # cross validation
-    clf.fit(features * 1e6, labels)
+    clf.fit(features, labels)
 
     return clf
 
@@ -85,9 +85,7 @@ def svm_tangent_space_cross_validate(data):
     y = np.concatenate((data['train_y'], data['test_y']), axis=0)
 
     # Construct sklearn pipeline
-    n_components = 3  # pick some components
-    clf = Pipeline([('cov_transform', Covariances(n_components,
-                                                  estimator='lwf')),
+    clf = Pipeline([('cov_transform', Covariances(estimator='lwf')),
                     ('tangent_space', TangentSpace(metric='riemann')),
                     ('svm_classify', SVC(kernel='rbf', gamma='auto'))])
     # cross validation
