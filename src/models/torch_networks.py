@@ -144,9 +144,9 @@ class ShiftScaleCovEMGNet(nn.Module):
         self.n_electrodes = config['n_electrodes']
 
         # Neural Network
-        self.layer_1 = nn.Linear(36, 72, bias=False)
-        self.layer_2 = nn.Linear(72, 72, bias=False)
-        self.layer_3 = nn.Linear(72, 36, bias=False)
+        self.layer_1 = nn.Sequential(nn.Linear(36, 72, bias=False), nn.Tanh())
+        self.layer_2 = nn.Sequential(nn.Linear(72, 72, bias=False), nn.Tanh())
+        self.layer_3 = nn.Sequential(nn.Linear(72, 36, bias=False), nn.Tanh())
         self.dropout = nn.Dropout(p=config['DROP_OUT'])
         self.layer_4 = nn.Linear(36, OUTPUT, bias=False)
 

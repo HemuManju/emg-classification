@@ -27,7 +27,7 @@ def one_hot_encode(label_length, category):
     return y
 
 
-def convert_to_array(subject, trial, config):
+def convert_to_array(subject, trial, config, signal_type='emg'):
     """Converts the edf files in eeg and robot dataset into arrays.
 
     Parameter
@@ -47,14 +47,20 @@ def convert_to_array(subject, trial, config):
     """
 
     # Read path
-    emg_path = str(Path(__file__).parents[2] / config['epoch_emg_data'])
-
-    # Load the data
-    data = dd.io.load(emg_path, group='/' + 'subject_' + subject)
-    epochs = data['emg'][trial]
-
-    # Get array data
-    x_array = epochs.get_data()
+    if signal_type == 'emg':
+        path = str(Path(__file__).parents[2] / config['epoch_emg_data'])
+        # Load the data
+        data = dd.io.load(path, group='/' + 'subject_' + subject)
+        epochs = data['emg'][trial]
+        # Get array data
+        x_array = epochs.get_data()
+    else:
+        path = str(Path(__file__).parents[2] / config['epoch_eeg_data'])
+        # Load the data
+        data = dd.io.load(path, group='/' + subject)
+        epochs = data['eeg'][trial]
+        # Get array data
+        x_array = epochs.get_data()[:, 0:20, :]
 
     if trial == 'HighFine':
         category = [1, 0, 0]
@@ -72,7 +78,7 @@ def convert_to_array(subject, trial, config):
     return x_array, y_array
 
 
-def clean_epoch_data(subjects, trials, config):
+def clean_epoch_data(subjects, trials, config, signal_type='emg'):
     """Create feature dataset for all subjects.
 
     Parameter
@@ -97,7 +103,8 @@ def clean_epoch_data(subjects, trials, config):
         y_temp = []
         for trial in trials:
             # Concatenate the data corresponding to all trials types
-            x_array, y_array = convert_to_array(subject, trial, config)
+            x_array, y_array = convert_to_array(subject, trial, config,
+                                                signal_type)
             x_temp.append(x_array)
             y_temp.append(y_array)
 

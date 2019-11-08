@@ -7,10 +7,13 @@ from data.create_data import (create_emg_data, create_emg_epoch,
                               create_robot_dataframe)
 from data.utils import save_data
 
-from datasets.riemann_datasets import train_test_data
+from datasets.riemann_datasets import (train_test_emg_data,
+                                       train_test_eeg_data)
 from datasets.torch_datasets import (train_test_iterator,
                                      subject_specific_data)
 from datasets.statistics_dataset import matlab_dataframe
+
+from features.emd_features import emd_features
 
 from models.riemann_models import (svm_tangent_space_classifier,
                                    svm_tangent_space_cross_validate,
@@ -39,21 +42,38 @@ with skip_run('skip', 'create_emg_data') as check, check():
 
     # Save the dataset
     save_path = Path(__file__).parents[1] / config['raw_emg_data']
-    save_data(str(save_path), data, save=True)
+    save_data(str(save_path), data, save=False)
 
-with skip_run('skip', 'create_epoch_data') as check, check():
+with skip_run('skip', 'create_epoch_emg_data') as check, check():
     data = create_emg_epoch(config['subjects'], config['trials'], config)
 
     # Save the dataset
     save_path = Path(__file__).parents[1] / config['epoch_emg_data']
     save_data(str(save_path), data, save=True)
 
-with skip_run('skip', 'clean_epoch_data') as check, check():
+with skip_run('skip', 'clean_epoch_emg_data') as check, check():
     data = clean_epoch_data(config['subjects'], config['trials'], config)
 
     # Save the dataset
     save_path = Path(__file__).parents[1] / config['clean_emg_data']
     save_data(str(save_path), data, save=True)
+
+with skip_run('skip', 'clean_epoch_eeg_data') as check, check():
+    data = clean_epoch_data(config['subjects'],
+                            config['trials'],
+                            config,
+                            signal_type='eeg')
+
+    # Save the dataset
+    save_path = Path(__file__).parents[1] / config['clean_eeg_data']
+    save_data(str(save_path), data, save=True)
+
+with skip_run('skip', 'create_imf_dataset') as check, check():
+    features = emd_features(config)
+
+    # Save the dataset
+    save_path = Path(__file__).parents[1] / config['emd_feature_data']
+    save_data(str(save_path), features, save=True)
 
 with skip_run('skip', 'create_statistics_dataframe') as check, check():
     data = create_robot_dataframe(config)
@@ -79,30 +99,38 @@ with skip_run('skip', 'statistical_analysis') as check, check():
                                      dependent='velocity',
                                      independent=var)
 
-with skip_run('skip', 'svm_subject_independent') as check, check():
+with skip_run('skip', 'svm_subject_independent_emg') as check, check():
     # Get the data
-    data = train_test_data(config, leave_out=False)
+    data = train_test_emg_data(config, leave_out=False)
 
     # Train the classifier and predict on test data
     clf = svm_tangent_space_classifier(data['train_x'], data['train_y'])
     svm_tangent_space_prediction(clf, data['test_x'], data['test_y'])
 
-with skip_run('skip', 'svm_subject_dependent') as check, check():
+with skip_run('skip', 'svm_subject_independent_eeg') as check, check():
     # Get the data
-    data = train_test_data(config, leave_out=True)
+    data = train_test_eeg_data(config, leave_out=False)
 
     # Train the classifier and predict on test data
     clf = svm_tangent_space_classifier(data['train_x'], data['train_y'])
     svm_tangent_space_prediction(clf, data['test_x'], data['test_y'])
 
-with skip_run('skip', 'svm_crossval_subject_independent') as check, check():
+with skip_run('skip', 'svm_subject_dependent_emg') as check, check():
     # Get the data
-    data = train_test_data(config, leave_out=False)
+    data = train_test_emg_data(config, leave_out=True)
+
+    # Train the classifier and predict on test data
+    clf = svm_tangent_space_classifier(data['train_x'], data['train_y'])
+    svm_tangent_space_prediction(clf, data['test_x'], data['test_y'])
+
+with skip_run('skip', 'svm_cval_subject_independent_emg') as check, check():
+    # Get the data
+    data = train_test_emg_data(config, leave_out=False)
     svm_tangent_space_cross_validate(data)
 
-with skip_run('skip', 'forest_crossval_subject_independent') as check, check():
+with skip_run('skip', 'forest_cval_subject_independent') as check, check():
     # Get the data
-    data = train_test_data(config, leave_out=False)
+    data = train_test_emg_data(config, leave_out=False)
     forest_tangent_space_cross_validate(data)
 
 with skip_run('skip', 'shallow_subject_independent') as check, check():
@@ -139,7 +167,7 @@ with skip_run('skip', 'shiftscale_subject_independent') as check, check():
                                    save_path,
                                    save_model=False)
 
-with skip_run('run', 'shiftscale_cov_subject_independent') as check, check():
+with skip_run('skip', 'shiftscale_cov_subject_independent') as check, check():
 
     for _ in range(5):
         dataset = train_test_iterator(config, [], leave_out=False, cov=True)

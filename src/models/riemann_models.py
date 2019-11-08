@@ -27,14 +27,13 @@ def svm_tangent_space_classifier(features, labels):
         Learnt classifier.
 
     """
+    print(features[0, 0, :] * 1e6)
     # Construct sklearn pipeline
-    n_components = 3  # pick some components
-    clf = Pipeline([('cov_transform', Covariances(n_components,
-                                                  estimator='lwf')),
+    clf = Pipeline([('cov_transform', Covariances('oas')),
                     ('tangent_space', TangentSpace(metric='riemann')),
                     ('svm_classify', SVC(kernel='rbf', gamma='auto'))])
     # cross validation
-    clf.fit(features, labels)
+    clf.fit(features * 1e6, labels)
 
     return clf
 
@@ -119,7 +118,7 @@ def forest_tangent_space_cross_validate(data):
     y = np.concatenate((data['train_y'], data['test_y']), axis=0)
 
     # Construct sklearn pipeline
-    clf = Pipeline([('cov_transform', Covariances(estimator='lwf')),
+    clf = Pipeline([('cov_transform', Covariances('lwf')),
                     ('tangent_space', TangentSpace(metric='riemann')),
                     ('random_forest_classify',
                      RandomForestClassifier(n_estimators=20,
