@@ -4,11 +4,15 @@ from pyriemann.embedding import Embedding
 from pyriemann.estimation import XdawnCovariances, Covariances
 from pyriemann.tangentspace import TangentSpace
 
+from imblearn.under_sampling import RandomUnderSampler
+
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_score, KFold
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
+
+import umap
 
 
 def svm_tangent_space_classifier(features, labels):
@@ -27,7 +31,6 @@ def svm_tangent_space_classifier(features, labels):
         Learnt classifier.
 
     """
-    print(features[0, 0, :] * 1e6)
     # Construct sklearn pipeline
     clf = Pipeline([('cov_transform', Covariances('oas')),
                     ('tangent_space', TangentSpace(metric='riemann')),
@@ -120,7 +123,7 @@ def forest_tangent_space_cross_validate(data):
                     ('tangent_space', TangentSpace(metric='riemann')),
                     ('random_forest_classify',
                      RandomForestClassifier(n_estimators=20,
-                                            max_depth=15,
+                                            max_depth=10,
                                             random_state=43))])
     # cross validation
     scores = cross_val_score(clf, x, y, cv=KFold(5, shuffle=True))
@@ -130,7 +133,168 @@ def forest_tangent_space_cross_validate(data):
     return scores
 
 
-def xdawn_embedding(data):
+def forest_tangent_space_hierarchical(data):
+    """A cross validated tangent space classifier with svm.
+
+    Parameters
+    ----------
+    data : dict
+        A dictionary containing training and testing data
+
+    Returns
+    -------
+    cross validated scores
+        A list of cross validated scores.
+
+    """
+
+    # Combine two classes into one class
+    x_level_1 = data['train_x']
+    y_level_1 = np.argmax(data['train_y'], axis=1) + 1
+    y_level_1 = np.expand_dims(y_level_1, axis=1)
+
+    # Verify if they are balanced
+    print(
+        sum(y_level_1 == 1) / len(y_level_1),
+        sum(y_level_1 == 2) / len(y_level_1),
+        sum(y_level_1 == 3) / len(y_level_1))
+
+    # Combine C1 and C2 classes and balance the dataset for traning
+    y_level_1[y_level_1 == 2] = 1
+    rus = RandomUnderSampler()
+    rus.fit_resample(y_level_1, y_level_1)
+
+    # Store them in dictionary
+    x_level_1 = x_level_1[rus.sample_indices_, :, :]
+    y_level_1 = y_level_1[rus.sample_indices_].ravel()
+
+    # Train a classifier with only this data
+    clf_level_1 = Pipeline([('cov_transform', Covariances('lwf')),
+                            ('tangent_space', TangentSpace(metric='riemann')),
+                            ('random_forest_classify',
+                             RandomForestClassifier(n_estimators=100,
+                                                    random_state=43))])
+    # scores_1 = cross_val_score(clf_level_1,
+    #                            x_level_1,
+    #                            y_level_1,
+    #                            cv=KFold(5, shuffle=True))
+
+    # Second level of traning
+    y_level_2 = np.argmax(data['train_y'], axis=1) + 1
+    idx = y_level_2 != 3
+    x_level_2 = data['train_x'][idx, :, :]
+    y_level_2 = y_level_2[idx].ravel()
+
+    # Train a classifier with only this data
+    clf_level_2 = Pipeline([('cov_transform', Covariances('lwf')),
+                            ('tangent_space', TangentSpace(metric='riemann')),
+                            ('random_forest_classify',
+                             RandomForestClassifier(n_estimators=100,
+                                                    random_state=43))])
+    # scores_2 = cross_val_score(clf_level_2,
+    #                            x_level_2,
+    #                            y_level_2,
+    #                            cv=KFold(5, shuffle=True))
+
+    # Fir the level 2 classifier for final testing
+    clf_level_1 = clf_level_1.fit(x_level_1, y_level_1)
+    clf_level_2 = clf_level_2.fit(x_level_2, y_level_2)
+
+    # Predict using first level and use the output for second level
+    y_true = np.argmax(data['test_y'], axis=1) + 1
+    y_pred_1 = clf_level_1.predict(data['test_x'])
+    idx = y_pred_1 == 1
+    y_pred_2 = clf_level_2.predict(data['test_x'][idx, :, :])
+    y_pred_1[idx] = y_pred_2
+
+    # Concatenate both of them and compare with true labels
+    y_pred = y_pred_1
+    score = accuracy_score(y_true, y_pred)
+
+    return score
+
+
+def forest_tangent_space_hierarchical_force(data):
+    """A cross validated tangent space classifier with svm.
+
+    Parameters
+    ----------
+    data : dict
+        A dictionary containing training and testing data
+
+    Returns
+    -------
+    cross validated scores
+        A list of cross validated scores.
+
+    """
+
+    # Combine two classes into one class
+    x_level_1 = data['train_pb'][:, 0:2, :].mean(axis=-1)
+    y_level_1 = np.argmax(data['train_y'], axis=1) + 1
+    y_level_1 = np.expand_dims(y_level_1, axis=1)
+
+    # Verify if they are balanced
+    print(
+        sum(y_level_1 == 1) / len(y_level_1),
+        sum(y_level_1 == 2) / len(y_level_1),
+        sum(y_level_1 == 3) / len(y_level_1))
+
+    # Combine C1 and C2 classes and balance the dataset for traning
+    y_level_1[y_level_1 == 2] = 1
+    rus = RandomUnderSampler()
+    rus.fit_resample(y_level_1, y_level_1)
+
+    # Store them in dictionary
+    x_level_1 = x_level_1[rus.sample_indices_, :]
+    y_level_1 = y_level_1[rus.sample_indices_].ravel()
+
+    # Train a classifier with only this data
+    clf_level_1 = RandomForestClassifier(n_estimators=100, random_state=43)
+    scores_1 = cross_val_score(clf_level_1,
+                               x_level_1,
+                               y_level_1,
+                               cv=KFold(5, shuffle=True))
+    print(scores_1)
+
+    # Second level of traning
+    y_level_2 = np.argmax(data['train_y'], axis=1) + 1
+    idx = y_level_2 != 3
+    x_level_2 = data['train_x'][idx, :, :]
+    y_level_2 = y_level_2[idx].ravel()
+
+    # Train a classifier with only this data
+    clf_level_2 = Pipeline([('cov_transform', Covariances('lwf')),
+                            ('tangent_space', TangentSpace(metric='riemann')),
+                            ('random_forest_classify',
+                             RandomForestClassifier(n_estimators=100,
+                                                    random_state=43))])
+    # scores_2 = cross_val_score(clf_level_2,
+    scores_2 = cross_val_score(clf_level_2,
+                               x_level_2,
+                               y_level_2,
+                               cv=KFold(5, shuffle=True))
+    print(scores_2)
+
+    # Fir the level 2 classifier for final testing
+    clf_level_1 = clf_level_1.fit(x_level_1, y_level_1)
+    clf_level_2 = clf_level_2.fit(x_level_2, y_level_2)
+
+    # Predict using first level and use the output for second level
+    y_true = np.argmax(data['test_y'], axis=1) + 1
+    y_pred_1 = clf_level_1.predict(data['test_pb'][:, 0:2, :].mean(axis=-1))
+    idx = y_pred_1 == 1
+    y_pred_2 = clf_level_2.predict(data['test_x'][idx, :, :])
+    y_pred_1[idx] = y_pred_2
+
+    # Concatenate both of them and compare with true labels
+    y_pred = y_pred_1
+    score = accuracy_score(y_true, y_pred)
+
+    return score
+
+
+def xdawn_embedding(data, use_xdawn):
     """Perform embedding of EEG data in 2D Euclidean space
     with Laplacian Eigenmaps.
 
@@ -146,11 +310,22 @@ def xdawn_embedding(data):
 
     """
 
-    nfilter = 3
-    xdwn = XdawnCovariances(estimator='scm', nfilter=nfilter)
-    covs = xdwn.fit(data['train_x'], data['train_y']).transform(data['test_x'])
+    if use_xdawn:
+        nfilter = 3
+        xdwn = XdawnCovariances(estimator='scm', nfilter=nfilter)
+        covs = xdwn.fit(data['train_x'],
+                        data['train_y']).transform(data['test_x'])
 
-    lapl = Embedding(metric='riemann', n_components=3)
-    embd = lapl.fit_transform(covs)
+        lapl = Embedding(metric='riemann', n_components=3)
+        embd = lapl.fit_transform(covs)
+    else:
+        tangent_space = Pipeline([
+            ('cov_transform', Covariances(estimator='lwf')),
+            ('tangent_space', TangentSpace(metric='riemann'))
+        ])
+        t_space = tangent_space.fit(data['train_x'],
+                                    data['train_y']).transform(data['test_x'])
+        reducer = umap.UMAP(n_neighbors=30, min_dist=1, spread=2)
+        embd = reducer.fit_transform(t_space)
 
     return embd

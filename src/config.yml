@@ -49,6 +49,8 @@ clean_emg_data: 'data/processed/clean_emg_exp_0_dataset.h5'
 clean_emd_data: 'data/processed/clean_emd_exp_0_dataset.h5'
 epoch_eeg_data: 'data/processed/epoch_eeg_exp_0_dataset.h5'
 clean_eeg_data: 'data/processed/clean_eeg_exp_0_dataset.h5'
+hierarchical_emg_data: 'data/processed/train_test_split_data.h5'
+hierarchical_time_data: 'data/processed/train_test_split_TD_features.h5'
 
 torch_dataset: 'data/processed/torch_exp_0_dataset.h5'
 statistics_dataframe: 'data/processed/statistics_exp_0_dataset.h5'

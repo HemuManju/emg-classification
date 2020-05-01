@@ -1,5 +1,6 @@
 import yaml
 from pathlib import Path
+import deepdish as dd
 import matplotlib.pyplot as plt
 
 from data.clean_data import clean_epoch_data
@@ -16,10 +17,12 @@ from datasets.statistics_dataset import matlab_dataframe
 from features.emd_features import (emd_features, create_imf_dataset)
 from features.emd_dataset import train_test_emd_data
 
-from models.riemann_models import (svm_tangent_space_classifier,
-                                   svm_tangent_space_cross_validate,
-                                   svm_tangent_space_prediction,
-                                   forest_tangent_space_cross_validate)
+from models import time_models
+from models.riemann_models import (
+    svm_tangent_space_classifier, svm_tangent_space_cross_validate,
+    svm_tangent_space_prediction, forest_tangent_space_cross_validate,
+    forest_tangent_space_hierarchical, forest_tangent_space_hierarchical_force,
+    xdawn_embedding)
 from models.statistical_models import mixed_effect_model
 from models.torch_networks import (ShallowEMGNet, ShiftScaleEMGNet,
                                    ShiftScaleCovEMGNet)
@@ -296,3 +299,29 @@ with skip_run('skip', 'plot_bar_graph') as check, check():
 
     plt.tight_layout()
     plt.show()
+
+with skip_run('skip', 'plot_embeddings') as check, check():
+    # Get the data
+    data = train_test_emg_data(config, leave_out=False)
+    embd = xdawn_embedding(data, use_xdawn=False)
+    plt.scatter(embd[:, 0], embd[:, 1], c=data['test_y'])
+    plt.show()
+
+with skip_run('skip', 'hierarchical_classification') as check, check():
+    data = dd.io.load(config['hierarchical_emg_data'])
+    score = forest_tangent_space_hierarchical(data)
+    print(score)
+
+    data = dd.io.load(config['hierarchical_timex_data'])
+    score = time_models.forest_tangent_space_hierarchical(data)
+    print(score)
+
+    data = dd.io.load(config['hierarchical_emg_data'])
+    score = forest_tangent_space_hierarchical_force(data)
+    print(score)
+
+    data_emg = dd.io.load(config['hierarchical_emg_data'])
+    data_time = dd.io.load(config['hierarchical_time_data'])
+    score = time_models.forest_tangent_space_hierarchical_time_emg(
+        data_time, data_emg)
+    print(score)
