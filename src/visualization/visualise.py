@@ -3,6 +3,7 @@ from pathlib import Path
 
 import torch
 import numpy as np
+from numpy import genfromtxt
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -324,3 +325,39 @@ def calculate_accuracy(model, data_iterator, key):
         accuracy = total / length
 
     return accuracy.numpy()
+
+
+def plot_predictions(config, class_idx):
+    read_path = Path(__file__).parents[2] / 'data/external/'
+
+    plt.style.use('clean')
+    fig, ax = plt.subplots(figsize=(12, 4), ncols=3, nrows=1, sharey=True)
+    for i in range(3):
+        class_idx = i + 1
+        # Time features
+        read_path_td = str(read_path / ('TD_class_' + str(class_idx) + '.csv'))
+        td_data = genfromtxt(read_path_td,
+                             delimiter=',',
+                             usecols=[1, 2],
+                             skip_header=True)
+        td_data = abs(td_data[:, 0] - td_data[:, 1]) > 0
+
+        # Reimann features
+        read_path_rm = str(read_path / ('RM_class_' + str(class_idx) + '.csv'))
+        rm_data = genfromtxt(read_path_rm,
+                             delimiter=',',
+                             usecols=[1, 2],
+                             skip_header=True)
+        rm_data = abs(rm_data[:, 0] - rm_data[:, 1]) > 0
+
+        # Plot the two predictions
+        ax[i].grid()
+        ax[i].plot(np.cumsum(td_data), label='Time domain features')
+        ax[i].plot(np.cumsum(rm_data), label='Reimann features')
+        ax[i].set_ylim([0, 250])
+        ax[i].set_xlim([0, 1500])
+        ax[i].set_xlabel('Time')
+        if i == 1:
+            ax[i].legend()
+    ax[0].set(ylabel='Cummulative Misclassifications')
+    plt.tight_layout(pad=0.5)

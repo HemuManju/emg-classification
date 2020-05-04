@@ -32,7 +32,8 @@ from models.utils import (save_trained_pytorch_model,
 
 from visualization.visualise import (plot_average_model_accuracy, plot_bar,
                                      plot_accuracy_bar,
-                                     plot_accuracy_bar_transfer)
+                                     plot_accuracy_bar_transfer,
+                                     plot_predictions)
 from visualization.utils import plot_settings
 
 from utils import skip_run
@@ -325,3 +326,17 @@ with skip_run('skip', 'hierarchical_classification') as check, check():
     score = time_models.forest_tangent_space_hierarchical_time_emg(
         data_time, data_emg)
     print(score)
+
+with skip_run('skip', 'plot_confusion_matrix') as check, check():
+    data_td = dd.io.load(config['hierarchical_time_data'])
+    forest_tangent_space_cross_validate(data_td)
+    plt.tight_layout(pad=0)
+    plt.title('Confusion Matrix with Time Domain Features')
+    plt.savefig('confusion_matrix_td_features.pdf')
+    plt.show()
+
+with skip_run('skip', 'plot_predictions') as check, check():
+    plot_predictions(config, None)
+    # plt.tight_layout()
+    plt.savefig('test.pdf')
+    plt.show()

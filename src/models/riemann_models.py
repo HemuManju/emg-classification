@@ -1,5 +1,7 @@
 import numpy as np
 
+import matplotlib.pyplot as plt
+
 from pyriemann.embedding import Embedding
 from pyriemann.estimation import XdawnCovariances, Covariances
 from pyriemann.tangentspace import TangentSpace
@@ -8,6 +10,7 @@ from imblearn.under_sampling import RandomUnderSampler
 
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_score, KFold
+from sklearn.metrics import plot_confusion_matrix
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
@@ -99,7 +102,7 @@ def svm_tangent_space_cross_validate(data):
     return scores
 
 
-def forest_tangent_space_cross_validate(data):
+def forest_tangent_space_cross_validate(data, cv=False):
     """A cross validated tangent space classifier with svm.
 
     Parameters
@@ -114,10 +117,6 @@ def forest_tangent_space_cross_validate(data):
 
     """
 
-    # Combine the dataset
-    x = np.concatenate((data['train_x'], data['test_x']), axis=0)
-    y = np.concatenate((data['train_y'], data['test_y']), axis=0)
-
     # Construct sklearn pipeline
     clf = Pipeline([('cov_transform', Covariances('lwf')),
                     ('tangent_space', TangentSpace(metric='riemann')),
@@ -125,12 +124,30 @@ def forest_tangent_space_cross_validate(data):
                      RandomForestClassifier(n_estimators=20,
                                             max_depth=10,
                                             random_state=43))])
-    # cross validation
-    scores = cross_val_score(clf, x, y, cv=KFold(5, shuffle=True))
-    print("Accuracy: %0.4f (+/- %0.4f)" % (scores.mean(), scores.std() * 2))
-    print('\n')
+    if cv:
+        # Combine the dataset
+        x = np.concatenate((data['train_x'], data['test_x']), axis=0)
+        y = np.concatenate((data['train_y'], data['test_y']), axis=0)
 
-    return scores
+        # cross validation
+        scores = cross_val_score(clf, x, y, cv=KFold(5, shuffle=True))
+        print("Accuracy: %0.4f (+/- %0.4f)" %
+              (scores.mean(), scores.std() * 2))
+        print('\n')
+    else:
+        clf = RandomForestClassifier(n_estimators=20,
+                                     max_depth=10,
+                                     random_state=43)
+        plt.style.use('clean')
+        y_train = np.argmax(data['train_y'], axis=1) + 1
+        y_test = np.argmax(data['test_y'], axis=1) + 1
+        classifier = clf.fit(data['train_x'], y_train)
+        plot_confusion_matrix(classifier,
+                              data['test_x'],
+                              y_test,
+                              normalize='true',
+                              cmap=plt.cm.Blues)
+    return None
 
 
 def forest_tangent_space_hierarchical(data):
@@ -174,10 +191,6 @@ def forest_tangent_space_hierarchical(data):
                             ('random_forest_classify',
                              RandomForestClassifier(n_estimators=100,
                                                     random_state=43))])
-    # scores_1 = cross_val_score(clf_level_1,
-    #                            x_level_1,
-    #                            y_level_1,
-    #                            cv=KFold(5, shuffle=True))
 
     # Second level of traning
     y_level_2 = np.argmax(data['train_y'], axis=1) + 1
@@ -191,10 +204,6 @@ def forest_tangent_space_hierarchical(data):
                             ('random_forest_classify',
                              RandomForestClassifier(n_estimators=100,
                                                     random_state=43))])
-    # scores_2 = cross_val_score(clf_level_2,
-    #                            x_level_2,
-    #                            y_level_2,
-    #                            cv=KFold(5, shuffle=True))
 
     # Fir the level 2 classifier for final testing
     clf_level_1 = clf_level_1.fit(x_level_1, y_level_1)
