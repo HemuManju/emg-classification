@@ -12,4 +12,4 @@ torch==1.1.0
 numpy==1.16.4
 imblearn==0.0
 scikit_learn==0.21.2
-PyYAML==5.1.1
+PyYAML==5.4
