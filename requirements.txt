@@ -9,7 +9,7 @@ deepdish==0.3.4
 torchnet==0.0.4
 pandas==0.25.0
 torch==1.1.0
-numpy==1.16.4
+numpy==1.22.0
 imblearn==0.0
 scikit_learn==0.21.2
 PyYAML==5.4
